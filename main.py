@@ -1,5 +1,11 @@
 import sys
 
+
+def main():
+    source = sys.argv[1]
+    result = Parser.run(source)
+    print(result)
+
 class Token:
 
     def __init__(self, token_type: str, value: str):
@@ -15,7 +21,39 @@ class Tokenizer:
         self.next       : Token = None      # o último token separado
     
     def select_next(self):
-        pass
+
+        token_value = str()
+        token_type  = str()
+
+        # se for espaço, pula
+        while self.source[self.position] == " ":
+            self.position += 1
+        
+        # se o caractere atual for um caractere numérico, concatena todos ao token_value até que não seja mais numérico
+        while self.source[self.position].isnumeric():
+            token_type       = "INT" 
+            token_value     += self.source[self.position]
+            self.position   += 1
+        
+        # se o token já tiver sido definido como inteiro, cria o token e termina a função
+        if token_type == "INT":
+            self.next   = Token(token_type, token_value)
+            return
+        
+        # se for mais, cria o token e termina a função
+        if self.source[self.position] == "+":
+            self.next        = Token("PLUS", "+")
+            self.position   += 1
+            return
+        
+        # se for menos, cria o token e termina a função
+        if self.source[self.position] == "-":
+            self.next        = Token("MINUS", "-")
+            self.position   += 1
+            return
+        
+        # se chegou até aqui, o caractere não pertence ao alfabeto
+        raise Exception("Erro léxico")
 
 
 class Parser:
@@ -91,3 +129,7 @@ class Parser:
             raise Exception("Erro de sintaxe")
         
         return result
+    
+
+if __name__ == "__main__":
+    main()
