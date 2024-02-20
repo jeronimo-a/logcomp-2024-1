@@ -19,21 +19,32 @@ class Tokenizer:
         self.source     : str   = source    # o código fonte
         self.position   : int   = 0         # posição atual que está sendo separada
         self.next       : Token = None      # o último token separado
+
+    def over(self):
+        return self.position == len(self.source)
     
     def select_next(self):
 
         token_value = str()
         token_type  = str()
 
+        if self.over():
+            self.next = Token("EOF", "")
+            return
+
         # se for espaço, pula
         while self.source[self.position] == " ":
             self.position += 1
+            if self.over():
+                self.next = Token("EOF", "")
+                return
         
         # se o caractere atual for um caractere numérico, concatena todos ao token_value até que não seja mais numérico
         while self.source[self.position].isnumeric():
             token_type       = "INT" 
             token_value     += self.source[self.position]
             self.position   += 1
+            if self.over(): break
         
         # se o token já tiver sido definido como inteiro, cria o token e termina a função
         if token_type == "INT":
@@ -87,8 +98,6 @@ class Parser:
                 
                 # soma o valor do inteiro à varíavel, levando em conta o último sinal
                 accumulator += int(token.value) * last_sign
-                
-                accumulator += int(token.value) # soma o valor do inteiro à variável acumuladora
                 position     = 1                # atualiza a posição no diagrama
                 continue
             
@@ -99,11 +108,13 @@ class Parser:
                 if token.type == "PLUS":
                     last_sign   = 1
                     position    = 0
+                    continue
 
                 # verifica se é um MINUS
                 if token.type == "MINUS":
                     last_sign   = -1
                     position    = 0
+                    continue
 
                 # verifica se é um EOF
                 if token.type == "EOF":
@@ -111,6 +122,8 @@ class Parser:
 
                 # se chegou aqui, a expressão não é sintaticamente correta
                 raise Exception("Erro de sintaxe")
+            
+        return accumulator
 
     
     @staticmethod
