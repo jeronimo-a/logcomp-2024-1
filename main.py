@@ -63,6 +63,18 @@ class Tokenizer:
             self.position   += 1
             return
         
+        # se for vezes, cria o token e termina a função
+        if self.source[self.position] == "*":
+            self.next       = Token("MULT", "*")
+            self.position  += 1
+            return
+        
+        # se for divisão, cria o token e termina a função
+        if self.source[self.position] == "/":
+            self.next       = Token("DIV", "/")
+            self.position  += 1
+            return
+        
         # se chegou até aqui, o caractere não pertence ao alfabeto
         raise Exception("Erro léxico")
 
@@ -85,24 +97,22 @@ class Parser:
 
         while True:
 
-            # processa o próximo token
-            Parser.tokenizer.select_next()
-            token = Parser.tokenizer.next
-
             # caso do lado esquerdo do diagrama
             if position == 0:
 
-                # verifica se é um inteiro
-                if token.type != "INT":
-                    raise Exception("Número esperado")
-                
-                # soma o valor do inteiro à varíavel, levando em conta o último sinal
-                accumulator += int(token.value) * last_sign
+                # chama a subrotina parse term
+                number = Parser.parse_term()
+
+                # soma o valor de saída de term, levando em conta o último sinal
+                accumulator += number * last_sign
                 position     = 1                # atualiza a posição no diagrama
                 continue
             
             # caso do lado direito do diagrama
             if position == 1:
+
+                # processa o próximo token
+                token = Parser.tokenizer.next
                 
                 # verifica se é um PLUS
                 if token.type == "PLUS":
@@ -119,9 +129,62 @@ class Parser:
                 # verifica se é um EOF
                 if token.type == "EOF":
                     break
-
+                
                 # se chegou aqui, a expressão não é sintaticamente correta
                 raise Exception("Erro de sintaxe")
+            
+        return accumulator
+    
+
+    @staticmethod
+    def parse_term():
+        '''
+        Subrotina do parse expression que consome os tokens de multiplicação e divisão
+        '''
+
+        position       = 0      # posição no diagrama sintático, 0 para esquerda, 1 para direita
+        accumulator    = 1      # variável de acumulação da multiplicação
+        multiplication = True   # True para multiplicação, False para divisão
+
+        while True:
+
+            # processa o próximo token
+            Parser.tokenizer.select_next()
+            token = Parser.tokenizer.next
+
+            # caso do lado esquerdo do diagrama
+            if position == 0:
+
+                # verifica se é um inteiro
+                if token.type != "INT":
+                    raise Exception("Número esperado")
+                
+                # multiplica ou divide o valor do inteiro à variável de acumulação
+                if multiplication: accumulator *= int(token.value)
+                else: accumulator = accumulator // int(token.value)
+                position = 1    # atualiza a posição no diagrama
+                continue
+            
+            # caso do lado direito do diagrama
+            if position == 1:
+                
+                # verifica se é um MULT
+                if token.type == "MULT":
+                    multiplication = True
+                    position       = 0
+                    continue
+
+                # verifica se é um DIV
+                if token.type == "DIV":
+                    multiplication = False
+                    position       = 0
+                    continue
+
+                # verifica se é um EOF
+                if token.type == "EOF":
+                    break
+
+                break
             
         return accumulator
 
