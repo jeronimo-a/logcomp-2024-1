@@ -75,6 +75,18 @@ class Tokenizer:
             self.position  += 1
             return
         
+        # se for abertura de parênteses, cria o token e termina a função
+        if self.source[self.position] == "(":
+            self.next       = Token("OPENPAR", "(")
+            self.position  += 1
+            return
+        
+        # se for fechamento de parênteses, cria o token e termina a função
+        if self.source[self.position] == ")":
+            self.next       = Token("CLOSEPAR", ")")
+            self.position  += 1
+            return
+        
         # se chegou até aqui, o caractere não pertence ao alfabeto
         raise Exception("Erro léxico")
 
