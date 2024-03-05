@@ -49,13 +49,17 @@ class Parser:
                     position    = 0
                     continue
 
+                # verifica se é um fechamento de parênteses
+                if token.type == "CLOSEPAR":
+                    break
+
                 # verifica se é um EOF
                 if token.type == "EOF":
                     break
                 
                 # se chegou aqui, a expressão não é sintaticamente correta
                 raise Exception("Erro de sintaxe")
-            
+        
         return accumulator
     
 
@@ -106,21 +110,71 @@ class Parser:
                 
                 # se não for nenhum, sai da função
                 break
-
+        
         return accumulator
     
 
     @staticmethod
     def parse_factor():
 
-        token = Parser.tokenizer.next
+        position    = 0         # posição no diagrama sintático
+        accumulator = 0         # variável de acumulação da soma
+        last_sign   = 1         # último sinal lido, 1 para mais, -1 para menos
+    
+        while True:
+            
+            token = Parser.tokenizer.next
 
-        if token.type != "INT":
-            raise Exception("Erro de sintaxe")
-        
-        Parser.tokenizer.select_next()
-        
-        return int(token.value)
+            if position == 0:
+
+                if token.type == "INT":
+                    Parser.tokenizer.select_next()
+                    accumulator += int(token.value)
+                    position = 1
+                    continue
+
+                if token.type == "PLUS":
+                    Parser.tokenizer.select_next()
+                    last_sign = 1
+                    posititon = 2
+                    continue
+
+                if token.type == "MINUS":
+                    Parser.tokenizer.select_next()
+                    last_sign = -1
+                    position  =  2
+                    continue
+
+                if token.type == "OPENPAR":
+                    Parser.tokenizer.select_next()
+                    position = 3
+                    continue
+
+                raise Exception("Erro de sintaxe")
+            
+            if position == 1: break
+
+            if position == 2:
+                number       = Parser.parse_factor()
+                accumulator += number * last_sign
+                position     = 1
+                continue
+
+            if position == 3:
+                number       = Parser.parse_expression()
+                accumulator += number
+                position     = 4
+                continue
+
+            if position == 4:
+                if token.type != "CLOSEPAR":
+                    raise Exception("Parênteses sem fechar")
+                Parser.tokenizer.select_next()
+                position = 1
+                continue
+
+
+        return accumulator
 
     
     @staticmethod
