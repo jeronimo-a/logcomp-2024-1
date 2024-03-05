@@ -37,12 +37,14 @@ class Parser:
                 
                 # verifica se é um PLUS
                 if token.type == "PLUS":
+                    Parser.tokenizer.select_next()
                     last_sign   = 1
                     position    = 0
                     continue
 
                 # verifica se é um MINUS
                 if token.type == "MINUS":
+                    Parser.tokenizer.select_next()
                     last_sign   = -1
                     position    = 0
                     continue
@@ -90,29 +92,31 @@ class Parser:
                 
                 # verifica se é um MULT
                 if token.type == "MULT":
+                    Parser.tokenizer.select_next()
                     multiplication = True
                     position       = 0
                     continue
 
                 # verifica se é um DIV
                 if token.type == "DIV":
+                    Parser.tokenizer.select_next()
                     multiplication = False
                     position       = 0
                     continue
-
+                
+                # se não for nenhum, sai da função
                 break
-            
+
         return accumulator
     
 
     @staticmethod
     def parse_factor():
 
-        Parser.tokenizer.select_next()
         token = Parser.tokenizer.next
 
         if token.type != "INT":
-            raise Exception("Número esperado")
+            raise Exception("Erro de sintaxe")
         
         Parser.tokenizer.select_next()
         
@@ -129,6 +133,7 @@ class Parser:
         Retorna o resultado do método "parse_expression"
         '''
         Parser.tokenizer = Tokenizer(source)
+        Parser.tokenizer.select_next()
         result = Parser.parse_expression()
 
         if (Parser.tokenizer.next.type != "EOF"):
