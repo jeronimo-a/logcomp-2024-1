@@ -1,4 +1,5 @@
 from langtokenizer import Tokenizer
+from langprepro import PrePro
 
 class Parser:
 
@@ -186,6 +187,7 @@ class Parser:
         Verifica se a cadeia foi consumida por completo
         Retorna o resultado do método "parse_expression"
         '''
+        source = PrePro.filter(source)          # remove comentários
         Parser.tokenizer = Tokenizer(source)
         Parser.tokenizer.select_next()
         result = Parser.parse_expression()
