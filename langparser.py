@@ -1,5 +1,6 @@
 from langtokenizer import Tokenizer
 from langprepro import PrePro
+from langnodes import *
 
 class Parser:
 
@@ -116,11 +117,9 @@ class Parser:
     
 
     @staticmethod
-    def parse_factor():
+    def parse_factor(last_node=None):
 
         position    = 0         # posição no diagrama sintático
-        accumulator = 0         # variável de acumulação da soma
-        last_sign   = 1         # último sinal lido, 1 para mais, -1 para menos
     
         while True:
             
@@ -130,20 +129,14 @@ class Parser:
 
                 if token.type == "INT":
                     Parser.tokenizer.select_next()
-                    accumulator += int(token.value)
+                    last_node = IntVal(int(token.value))
                     position = 1
                     continue
 
-                if token.type == "PLUS":
+                if token.type == "PLUS" or token.type == "MINUS":
                     Parser.tokenizer.select_next()
-                    last_sign = 1
+                    last_node = BinOp(token.value, last_node, None)
                     posititon = 2
-                    continue
-
-                if token.type == "MINUS":
-                    Parser.tokenizer.select_next()
-                    last_sign = -1
-                    position  =  2
                     continue
 
                 if token.type == "OPENPAR":
@@ -156,15 +149,13 @@ class Parser:
             if position == 1: break
 
             if position == 2:
-                number       = Parser.parse_factor()
-                accumulator += number * last_sign
-                position     = 1
+                last_node = Parser.parse_factor(last_node)
+                position  = 1
                 continue
 
             if position == 3:
-                number       = Parser.parse_expression()
-                accumulator += number
-                position     = 4
+                last_node = Parser.parse_expression(last_node)
+                position  = 4
                 continue
 
             if position == 4:
@@ -175,7 +166,7 @@ class Parser:
                 continue
 
 
-        return accumulator
+        return last_node
 
     
     @staticmethod
