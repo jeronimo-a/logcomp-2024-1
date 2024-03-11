@@ -10,8 +10,8 @@ class Node:
 
 class BinOp(Node):
 
-    def __init__(self, value: str, left: Node, right: Node):
-        super().__init__(self, value, [left, right])
+    def __init__(self, value: str):
+        super().__init__(value, [None, None])
 
     def Evaluate(self):
 
@@ -28,8 +28,8 @@ class BinOp(Node):
 
 class UnOp(Node):
 
-    def __init__(self, value: str, child: Node):
-        super().__init__(self, value, [child])
+    def __init__(self, value: str):
+        super().__init__(value, [None])
 
     def Evaluate(self):
         child_evaluation = self.children[0].Evaluate()
@@ -41,10 +41,10 @@ class UnOp(Node):
 class IntVal(Node):
 
     def __init__(self, value: int):
-        super().__init__(self, value, [])
+        super().__init__(value, [])
 
 
 class NoOp(Node):
 
     def __init__(self):
-        super().__init__(self, None, [])
+        super().__init__(None, [])
