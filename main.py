@@ -3,7 +3,8 @@ from langparser import Parser
 
 def main():
     source = sys.argv[1]
-    result = Parser.run(source)
+    with open(source, "r") as file:
+        result = Parser.run(file.read())
     print(result)
 
 if __name__ == "__main__":
