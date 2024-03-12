@@ -22,13 +22,13 @@ class Parser:
         #source = PrePro.filter(source)
         Parser.tokenizer = Tokenizer(source)
         Parser.tokenizer.select_next()
-        root = Parser.parse_factor()
+        root = Parser.parse_term()
         result = root.Evaluate()
 
         if (Parser.tokenizer.next.type != "EOF"):
             raise Exception("Erro de sintaxe")
         
-        return root
+        return root, result
 
 
     @staticmethod
@@ -87,47 +87,46 @@ class Parser:
     
 
     @staticmethod
-    def parse_term(root=None):
+    def parse_term():
         '''
-        Subrotina do parse expression
-        Consome os tokens de multiplicação e divisão
+        Implementação do term do diagrama sintático
+        Vide diagrama_sintatico.png
         '''
 
-        position = 0        # posição no diagrama sintático, 0 para esquerda, 1 para direita
-        new_node = None     # último Node gerado  
+        position    = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
+        latest_node = None  # último node gerado
+        factor_node = None  # node gerado pelo factor
 
+        # loop de percorrimento do diagrama sintático
         while True:
 
-            token = Parser.tokenizer.next
+            token = Parser.tokenizer.next   # último token
 
-            # caso do lado esquerdo da função, vide diagrama_sintatico.png
+            # comportamento na primeira parte do diagrama sintático na parte term
             if position == 0:
+                factor_node = Parser.parse_factor()             # chama parse_factor
+                try:
+                    latest_node.children.append(factor_node)    # se já existir o latest node, appenda o novo factor aos filhos
+                    factor_node = latest_node                   # o latest node vira o factor node
+                except: pass
+                position = 1                                    # vai para a segunda parte do diagrama
+                continue                                        # reinicia o loop
 
-                # chama a subrotina parse factor, atualiza a posição e reinicia o loop
-                new_node = Parser.parse_factor(root)
-                position = 1
-                continue
-            
-            # caso do lado direito da função, vide diagrama_sintatico.png
+            # comportamento na segunda parte do diagrama sintático na parte term
             if position == 1:
-                
-                # verifica se é um MULT ou DIV
-                if token.type == "MULT" or token.type == "DIV":
 
-                    # consome o token e cria um Node BinOp
-                    Parser.tokenizer.select_next()
-                    root = BinOp(token.value)
-                    root.children.append(new_node)
-
-                    # atualiza a posição e reinicia o loop
-                    position = 0
-                    continue
-                
-                # se não for nenhum, sai da função
-                root = new_node
+                # lida com os operadores binários
+                if token.type == "DIV" or token.type == "MULT":
+                    Parser.tokenizer.select_next()              # consome o token
+                    latest_node = BinOp(token.value)            # cria o novo node do operador binário
+                    latest_node.children.append(factor_node)    # adiciona o resultado do parse_factor aos filhos do operador binário
+                    position = 0                                # volta para a primeira parte do diagrama na parte term
+                    continue                                    # reinicia o loop
+                    
+                # se chegou aqui, termina a função
                 break
-        
-        return root
+
+        return latest_node
     
 
     @staticmethod
