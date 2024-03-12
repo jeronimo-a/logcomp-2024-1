@@ -22,7 +22,7 @@ class Parser:
         #source = PrePro.filter(source)
         Parser.tokenizer = Tokenizer(source)
         Parser.tokenizer.select_next()
-        root = Parser.parse_term()
+        root = Parser.parse_expression()
         result = root.Evaluate()
 
         if (Parser.tokenizer.next.type != "EOF"):
@@ -32,58 +32,46 @@ class Parser:
 
 
     @staticmethod
-    def parse_expression(root=None):
+    def parse_expression():
         '''
-        Consome os tokens do Tokenizer
-        Analisa se a sintaxe está aderente à gramática
-        Retorna o resultado da expressão analisada
+        Implementação do expression do diagrama sintático
+        Vide diagrama_sintatico.png
         '''
 
-        position = 0        # posição no diagrama sintático, 0 para esquerda, 1 para direita
-        new_node = None     # último Node gerado
+        position    = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
+        latest_node = None  # último node gerado
+        term_node   = None  # node gerado pelo term
 
+        # loop de percorrimento do diagrama sintático
         while True:
 
-            token = Parser.tokenizer.next
+            token = Parser.tokenizer.next   # último token
 
-            # caso do lado esquerdo do diagrama
+            # comportamento na primeira parte do diagrama sintático na parte term
             if position == 0:
+                term_node = Parser.parse_term()                 # chama parse_term
+                try:
+                    latest_node.children.append(term_node)      # se já existir o latest node, appenda o novo term aos filhos
+                    term_node = latest_node                     # o latest node vira o term node
+                except: latest_node = term_node
+                position = 1                                    # vai para a segunda parte do diagrama
+                continue                                        # reinicia o loop
 
-                # chama a subrotina parse term
-                new_node = Parser.parse_term(root)
-
-                # atualiza a posição e reinicia o loop
-                position = 1
-                continue
-            
-            # caso do lado direito do diagrama
+            # comportamento na segunda parte do diagrama sintático na parte term
             if position == 1:
-                
-                # verifica se é um PLUS ou MINUS
+
+                # lida com os operadores binários
                 if token.type == "PLUS" or token.type == "MINUS":
-
-                    # consome um token e cria um Node BinOp
-                    Parser.tokenizer.select_next()
-                    root = BinOp(token.value)
-                    root.children.append(new_node)
-
-                    # atualiza a posição e reinicia o loop
-                    position    = 0
-                    continue
-
-                # verifica se é um fechamento de parênteses
-                if token.type == "CLOSEPAR":
-                    break
-
-                # verifica se é um EOF
-                if token.type == "EOF":
-                    break
-                
-                # se chegou aqui, a expressão não é sintaticamente correta
-                raise Exception("Erro de sintaxe")
+                    Parser.tokenizer.select_next()              # consome o token
+                    latest_node = BinOp(token.value)            # cria o novo node do operador binário
+                    latest_node.children.append(term_node)      # adiciona o resultado do parse term aos filhos do operador binário
+                    position = 0                                # volta para a primeira parte do diagrama na parte term
+                    continue                                    # reinicia o loop
+                    
+                # se chegou aqui, termina a função
+                break
         
-        root = new_node
-        return root
+        return latest_node
     
 
     @staticmethod
@@ -108,7 +96,7 @@ class Parser:
                 try:
                     latest_node.children.append(factor_node)    # se já existir o latest node, appenda o novo factor aos filhos
                     factor_node = latest_node                   # o latest node vira o factor node
-                except: pass
+                except: latest_node = factor_node
                 position = 1                                    # vai para a segunda parte do diagrama
                 continue                                        # reinicia o loop
 
@@ -125,7 +113,7 @@ class Parser:
                     
                 # se chegou aqui, termina a função
                 break
-
+        
         return latest_node
     
 
@@ -183,10 +171,11 @@ class Parser:
 
             # comportamento da posição 3 do diagrama na parte factor, vide diagrama_sintatico.png
             if position == 3:
-                subroutine_node = Parser.parse_expression()     # chama parse_expression de novo
-                latest_node.children.append(subroutine_node)    # adiciona o resultado da subrotina aos filhos do node desse escopo
-                position = 4                                    # vai para a posição 4 do diagrama na parte factor
-                continue                                        # reinicia o loop
+                subroutine_node = Parser.parse_expression()             # chama parse_expression de novo
+                try: latest_node.children.append(subroutine_node)       # adiciona o resultado da subrotina aos filhos do node desse escopo, se houver node desse escopo
+                except AttributeError: latest_node = subroutine_node    # se não houver, torna o resultado da subrotina o latest node
+                position = 4                                            # vai para a posição 4 do diagrama na parte factor
+                continue                                                # reinicia o loop
 
             # comportamento da posição 4 do diagram na parte factor, vide diagrama_sintatico.png
             if position == 4:
