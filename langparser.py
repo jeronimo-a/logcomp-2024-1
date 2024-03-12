@@ -2,52 +2,72 @@ from langtokenizer import Tokenizer
 from langprepro import PrePro
 from langnodes import *
 
+
 class Parser:
 
     tokenizer : Tokenizer = None    # instância da classe Tokenizer que irá ler o código fonte e alimentar o Parser
 
     @staticmethod
-    def parse_expression():
+    def run(source: str):
+        '''
+        Recebe o código fonte como argumento
+        Remove comentários
+        Inicializa uma instância de Tokenizador
+        Posiciona o Tokenizer no primeiro token (feito no inicializador de Tokenizer)
+        Verifica se a cadeia foi consumida por completo
+        Constrói a árvore AST
+        Retorna o resultado do método Evaluate do Node raíz da árvore
+        '''
+
+        #source = PrePro.filter(source)
+        Parser.tokenizer = Tokenizer(source)
+        Parser.tokenizer.select_next()
+        root = Parser.parse_factor()
+        result = root.Evaluate()
+
+        if (Parser.tokenizer.next.type != "EOF"):
+            raise Exception("Erro de sintaxe")
+        
+        return root
+
+
+    @staticmethod
+    def parse_expression(root=None):
         '''
         Consome os tokens do Tokenizer
         Analisa se a sintaxe está aderente à gramática
         Retorna o resultado da expressão analisada
         '''
 
-        position    = 0         # posição no diagrama sintático, 0 para esquerda, 1 para direita
-        accumulator = 0         # variável de acumulação da soma
-        last_sign   = 1         # último sinal lido, 1 para mais, -1 para menos
+        position = 0        # posição no diagrama sintático, 0 para esquerda, 1 para direita
+        new_node = None     # último Node gerado
 
         while True:
+
+            token = Parser.tokenizer.next
 
             # caso do lado esquerdo do diagrama
             if position == 0:
 
                 # chama a subrotina parse term
-                number = Parser.parse_term()
+                new_node = Parser.parse_term(root)
 
-                # soma o valor de saída de term, levando em conta o último sinal
-                accumulator += number * last_sign
-                position     = 1                # atualiza a posição no diagrama
+                # atualiza a posição e reinicia o loop
+                position = 1
                 continue
             
             # caso do lado direito do diagrama
             if position == 1:
-
-                # processa o próximo token
-                token = Parser.tokenizer.next
                 
-                # verifica se é um PLUS
-                if token.type == "PLUS":
-                    Parser.tokenizer.select_next()
-                    last_sign   = 1
-                    position    = 0
-                    continue
+                # verifica se é um PLUS ou MINUS
+                if token.type == "PLUS" or token.type == "MINUS":
 
-                # verifica se é um MINUS
-                if token.type == "MINUS":
+                    # consome um token e cria um Node BinOp
                     Parser.tokenizer.select_next()
-                    last_sign   = -1
+                    root = BinOp(token.value)
+                    root.children.append(new_node)
+
+                    # atualiza a posição e reinicia o loop
                     position    = 0
                     continue
 
@@ -62,128 +82,109 @@ class Parser:
                 # se chegou aqui, a expressão não é sintaticamente correta
                 raise Exception("Erro de sintaxe")
         
-        return accumulator
+        root = new_node
+        return root
     
 
     @staticmethod
-    def parse_term():
+    def parse_term(root=None):
         '''
         Subrotina do parse expression
         Consome os tokens de multiplicação e divisão
         '''
 
-        position       = 0      # posição no diagrama sintático, 0 para esquerda, 1 para direita
-        accumulator    = 1      # variável de acumulação da multiplicação
-        multiplication = True   # True para multiplicação, False para divisão
+        position = 0        # posição no diagrama sintático, 0 para esquerda, 1 para direita
+        new_node = None     # último Node gerado  
 
         while True:
 
-            # caso do lado esquerdo do diagrama
+            token = Parser.tokenizer.next
+
+            # caso do lado esquerdo da função, vide diagrama_sintatico.png
             if position == 0:
 
-                # chama a subrotina parse factor
-                number = Parser.parse_factor()
-
-                # multiplica o valor de saída de factor, levando em conta a operação
-                if multiplication: accumulator *= number
-                else: accumulator = accumulator // number
-                position = 1    # atualiza a posição no diagrama
+                # chama a subrotina parse factor, atualiza a posição e reinicia o loop
+                new_node = Parser.parse_factor(root)
+                position = 1
                 continue
             
-            # caso do lado direito do diagrama
+            # caso do lado direito da função, vide diagrama_sintatico.png
             if position == 1:
-
-                # processa o próximo token
-                token = Parser.tokenizer.next
                 
-                # verifica se é um MULT
-                if token.type == "MULT":
-                    Parser.tokenizer.select_next()
-                    multiplication = True
-                    position       = 0
-                    continue
+                # verifica se é um MULT ou DIV
+                if token.type == "MULT" or token.type == "DIV":
 
-                # verifica se é um DIV
-                if token.type == "DIV":
+                    # consome o token e cria um Node BinOp
                     Parser.tokenizer.select_next()
-                    multiplication = False
-                    position       = 0
+                    root = BinOp(token.value)
+                    root.children.append(new_node)
+
+                    # atualiza a posição e reinicia o loop
+                    position = 0
                     continue
                 
                 # se não for nenhum, sai da função
+                root = new_node
                 break
         
-        return accumulator
+        return root
     
 
     @staticmethod
-    def parse_factor(last_node=None):
+    def parse_factor(local_root=None):
+        '''
+        Implementação do factor do diagrama sintático
+        Vide diagrama_sintatico.png
+        Recebe o Node root local, se esse já existir
+        Retorna o Node root local
+        '''
 
-        position    = 0         # posição no diagrama sintático
-    
+        position    = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
+        latest_node = None  # último node gerado
+
+        # loop de percorrimento do diagrama sintático
         while True:
-            
-            token = Parser.tokenizer.next
 
+            token = Parser.tokenizer.next   # último token
+
+            # comportamento da posição inicial do diagrama na parte factor
             if position == 0:
-
+                
+                # lida com números
                 if token.type == "INT":
-                    Parser.tokenizer.select_next()
-                    last_node = IntVal(int(token.value))
-                    position = 1
-                    continue
+                    Parser.tokenizer.select_next()          # consome o token
+                    latest_node = IntVal(int(token.value))  # cria o novo node
+                    position = 1                            # vai para a posição 1 do diagrama
+                    continue                                # reinicia o loop
 
+                # lida com operadores unários
                 if token.type == "PLUS" or token.type == "MINUS":
-                    Parser.tokenizer.select_next()
-                    last_node = BinOp(token.value, last_node, None)
-                    posititon = 2
-                    continue
+                    Parser.tokenizer.select_next()      # consome o token
+                    latest_node = UnOp(token.value)     # cria o novo node
+                    position = 2                        # vai para a posição 2 do diagrama
+                    continue                            # reinicia o loop
 
+                # lida com parênteses
                 if token.type == "OPENPAR":
-                    Parser.tokenizer.select_next()
-                    position = 3
-                    continue
+                    Parser.tokenizer.select_next()  # consome o token
+                    position = 3                    # vai para a posição 3 do diagrama
+                    continue                        # reinicia o loop
 
+                # gera erro caso chegar aqui
                 raise Exception("Erro de sintaxe")
             
-            if position == 1: break
+            # comportamento da posição final do diagrama na parte factor
+            if position == 1:
+                break   # apenas sai do loop
 
+            # comportamento da posição 2 do diagrama na parte factor, vide diagrama_sintatico.png
             if position == 2:
-                last_node = Parser.parse_factor(last_node)
-                position  = 1
-                continue
+                subroutine_node = Parser.parse_factor(latest_node)  # chama factor novamente, mas com o latest node
+                latest_node.children.append(subroutine_node)        # se haver root local, inclui em seus filhos
+                position = 1                                        # vai para a posição final do diagrama na parte factor
+                continue                                            # reinicia o loop
 
-            if position == 3:
-                last_node = Parser.parse_expression(last_node)
-                position  = 4
-                continue
-
-            if position == 4:
-                if token.type != "CLOSEPAR":
-                    raise Exception("Parênteses sem fechar")
-                Parser.tokenizer.select_next()
-                position = 1
-                continue
-
-
-        return last_node
-
-    
-    @staticmethod
-    def run(source: str):
-        '''
-        Recebe o código fonte como argumento
-        Inicializa uma instância de Tokenizador
-        Posiciona o Tokenizer no primeiro token (feito no inicializador de Tokenizer)
-        Verifica se a cadeia foi consumida por completo
-        Retorna o resultado do método "parse_expression"
-        '''
-        source = PrePro.filter(source)          # remove comentários
-        Parser.tokenizer = Tokenizer(source)
-        Parser.tokenizer.select_next()
-        result = Parser.parse_expression()
-
-        if (Parser.tokenizer.next.type != "EOF"):
-            raise Exception("Erro de sintaxe")
+            raise Exception("Parênteses WIP")
         
-        return result
+        return latest_node
+
