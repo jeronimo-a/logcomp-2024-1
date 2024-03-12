@@ -131,12 +131,10 @@ class Parser:
     
 
     @staticmethod
-    def parse_factor(local_root=None):
+    def parse_factor():
         '''
         Implementação do factor do diagrama sintático
         Vide diagrama_sintatico.png
-        Recebe o Node root local, se esse já existir
-        Retorna o Node root local
         '''
 
         position    = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
@@ -179,12 +177,25 @@ class Parser:
 
             # comportamento da posição 2 do diagrama na parte factor, vide diagrama_sintatico.png
             if position == 2:
-                subroutine_node = Parser.parse_factor(latest_node)  # chama factor novamente, mas com o latest node
-                latest_node.children.append(subroutine_node)        # se haver root local, inclui em seus filhos
-                position = 1                                        # vai para a posição final do diagrama na parte factor
-                continue                                            # reinicia o loop
+                subroutine_node = Parser.parse_factor()         # chama parse_factor de novo
+                latest_node.children.append(subroutine_node)    # adiciona o resultado da subrotina aos filhos do node desse escopo
+                position = 1                                    # vai para a posição final do diagrama na parte factor
+                continue                                        # reinicia o loop
 
-            raise Exception("Parênteses WIP")
-        
+            # comportamento da posição 3 do diagrama na parte factor, vide diagrama_sintatico.png
+            if position == 3:
+                subroutine_node = Parser.parse_expression()     # chama parse_expression de novo
+                latest_node.children.append(subroutine_node)    # adiciona o resultado da subrotina aos filhos do node desse escopo
+                position = 4                                    # vai para a posição 4 do diagrama na parte factor
+                continue                                        # reinicia o loop
+
+            # comportamento da posição 4 do diagram na parte factor, vide diagrama_sintatico.png
+            if position == 4:
+                if token.type != "CLOSEPAR":                    # verifica se é fechamento de parênteses
+                    raise Exception("Parênteses sem fechar")    # se não for, gera um erro
+                Parser.tokenizer.select_next()                  # consome o token
+                position = 1                                    # vai para a posição 1 do diagrama na parte factor
+                continue                                        # reinicia o loop
+                
         return latest_node
 
