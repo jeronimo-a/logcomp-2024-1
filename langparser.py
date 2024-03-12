@@ -19,16 +19,22 @@ class Parser:
         Retorna o resultado do método Evaluate do Node raíz da árvore
         '''
 
-        source = PrePro.filter(source)
-        Parser.tokenizer = Tokenizer(source)
-        Parser.tokenizer.select_next()
-        root = Parser.parse_expression()
-        result = root.Evaluate()
+        result, _ = Parser.inrun(source, filter=True)
 
         if (Parser.tokenizer.next.type != "EOF"):
             raise Exception("Erro de sintaxe")
         
         return result
+    
+
+    @staticmethod
+    def inrun(source: str, filter: bool=False):
+        if filter: source = PrePro.filter(source)
+        Parser.tokenizer = Tokenizer(source)
+        Parser.tokenizer.select_next()
+        root = Parser.parse_expression()
+        result = root.Evaluate()
+        return result, root
 
 
     @staticmethod

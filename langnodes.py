@@ -6,6 +6,13 @@ class Node:
 
     def Evaluate(self):
         return self.value
+    
+    def View(self, counter: int=0, margin: str="  "):
+        print(counter * margin, self.value, sep="")
+        try: self.children[0].View(counter + 1, margin)
+        except Exception: return
+        try: self.children[1].View(counter + 1, margin)
+        except Exception: return
 
 
 class BinOp(Node):
