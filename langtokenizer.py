@@ -100,5 +100,12 @@ class Tokenizer:
             self.position  += 1
             return
         
+        # se for newline, cria o token e termina a função
+        if self.source[self.position] == "\n":
+            self.next       = Token("NEWLINE", "\n")
+            self.position  += 1
+            return
+        
         # se chegou até aqui, o caractere não pertence ao alfabeto
         raise Exception("Erro léxico")
+    
