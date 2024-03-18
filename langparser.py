@@ -1,3 +1,4 @@
+from langsymboltable import SymbolTable
 from langtokenizer import Tokenizer
 from langprepro import PrePro
 from langnodes import *
@@ -5,7 +6,8 @@ from langnodes import *
 
 class Parser:
 
-    tokenizer : Tokenizer = None    # instância da classe Tokenizer que irá ler o código fonte e alimentar o Parser
+    tokenizer    : Tokenizer   = None   # instância da classe Tokenizer que irá ler o código fonte e alimentar o Parser
+    symbol_table : SymbolTable = None   # instância da classe SymbolTable que irá armazenar o valor das variáveis
 
     @staticmethod
     def run(source: str):
@@ -32,6 +34,7 @@ class Parser:
         if filter: source = PrePro.filter(source)
         Parser.tokenizer = Tokenizer(source)
         Parser.tokenizer.select_next()
+        Parser.symbol_table = SymbolTable()
         root = Parser.parse_expression()
         result = root.Evaluate()
         return result, root
@@ -130,8 +133,8 @@ class Parser:
         Vide diagrama_sintatico.png
         '''
 
-        position    = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
-        latest_node = None  # último node gerado
+        position     = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
+        latest_node  = None  # último node gerado
 
         # loop de percorrimento do diagrama sintático
         while True:
@@ -160,6 +163,13 @@ class Parser:
                     Parser.tokenizer.select_next()  # consome o token
                     position = 3                    # vai para a posição 3 do diagrama
                     continue                        # reinicia o loop
+
+                # lide com variáveis
+                if token.type == "IDENT":
+                    Parser.tokenizer.select_next()                          # consome o token
+                    latest_node = Ident(token.value, Parser.symbol_table)   # cria o novo node
+                    position = 1                                            # vai para a posição 1 do diagrama
+                    continue                                                # reinicia o loop
 
                 # gera erro caso chegar aqui
                 raise Exception("Erro de sintaxe")
