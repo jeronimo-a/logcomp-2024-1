@@ -3,6 +3,23 @@ class PrePro:
     @staticmethod
     def filter(text: str):
 
-        try: i = str.index(text, "--")
-        except ValueError: i = len(text)
-        return text[:i].strip()
+        # remove linhas vazias
+        new_text = text.replace("\n\n", "\n")
+        while new_text != text:
+            text = new_text
+            new_text = text.replace("\n\n", "\n")
+
+        # remove comentários
+        while True:
+            try: start = str.index(text, "--")
+            except ValueError: break
+            end = start
+            try:
+                while text[end] != "\n":
+                    end += 1
+            except IndexError:
+                text = text[:start]
+                break
+            text = text[:start] + text[end:]
+
+        return text
