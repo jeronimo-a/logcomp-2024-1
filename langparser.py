@@ -21,13 +21,18 @@ class Parser:
         Retorna o resultado do método Evaluate do Node raíz da árvore
         '''
 
-        result, _ = Parser.inrun(source, filter=True)
+        _ = Parser.inrun(source, filter=True)
 
         if (Parser.tokenizer.next.type != "EOF"):
             raise Exception("Erro de sintaxe")
-        
-        return result
     
+
+    @staticmethod
+    def testrun(source_file: str):
+        with open(source_file) as file:
+            source = file.read()
+        return Parser.inrun(source, True)
+
 
     @staticmethod
     def inrun(source: str, filter: bool=False):
@@ -35,9 +40,111 @@ class Parser:
         Parser.tokenizer = Tokenizer(source)
         Parser.tokenizer.select_next()
         Parser.symbol_table = SymbolTable()
-        root = Parser.parse_expression()
-        result = root.Evaluate()
-        return result, root
+        root = Parser.parse_block()
+        root.Evaluate()
+        return root
+    
+
+    @staticmethod
+    def parse_block():
+        '''
+        Implementação do block do diagrama sintático
+        Vide diagrama_sintatico.png
+        '''
+
+        root = Block()
+
+        while Parser.tokenizer.next.type != "EOF":
+            root.children.append(Parser.parse_statement())
+
+        return root
+
+
+    @staticmethod
+    def parse_statement():
+        '''
+        Implementação do statement do diagrama sintático
+        Vide diagrama_sintatico.png
+        '''
+
+        position = 0        # posição no diagrama sintático, vide diagrama_sintatico.png
+        latest_node = None  # último node gerado
+        
+        # loop de percorrimento do diagrama sintático
+        while True:
+
+            token = Parser.tokenizer.next   # último token
+
+            # comportamento da parte inicial do diagrama sintático na parte statement
+            if position == 0:
+                
+                # se for token do tipo "IDENT"
+                if token.type == "IDENT":
+                    Parser.tokenizer.select_next()                          # consome o token
+                    latest_node = Ident(token.value, Parser.symbol_table)   # cria o novo Node do tipo Ident
+                    position = 2                                            # atualiza a posição no diagrama sintático
+                    continue                                                # reinicia o loop
+
+                # se for token do tipo "PRINT"
+                if token.type == "PRINT":
+                    Parser.tokenizer.select_next()  # consome o token
+                    latest_node = Print()           # cria o novo Node do tipo Print
+                    position = 1                    # atualiza a posição no diagrama sintático
+                    continue                        # reinicia o loop
+
+                # se for token do tipo "NEWLINE"
+                if token.type == "NEWLINE" or token.type == "EOF":
+                    Parser.tokenizer.select_next()  # consome o token
+                    position = 7                    # atualiza a posição no diagrama sintático
+                    continue                        # reinicia o loop
+
+                raise Exception("Erro de sintaxe")
+
+            # comportamento na posição 1 do diagrama sintático na parte statement
+            if position == 1:
+                if token.type != "OPENPAR":                                 # espera-se apenas abertura de parênteses
+                    raise Exception("Print requer abertura de parênteses")  # gera erro caso não for abertura de parênteses
+                Parser.tokenizer.select_next()                              # consome o token
+                position = 3                                                # atualiza a posição no diagrama sintático
+                continue                                                    # reinicia o loop
+
+            # comportamento na posição 2 do diagrama sintático na parte statement
+            if position == 2:
+                if token.type != "ASSIGN":                          # espera-se apenas o operador de atribuição
+                    raise Exception("Token de atribuição esperado") # gera erro caso não for abertura de parênteses
+                Parser.tokenizer.select_next()                      # consome o token
+                assign_node = Assign(Parser.symbol_table)           # cria o novo Node do tipo Assign
+                assign_node.children.append(latest_node)            # inclui o Ident gerado na posição 2 nos filhos do Assign
+                latest_node = assign_node                           # torna o Assign o latest_node
+                position = 4                                        # atualiza a posição no diagrama sintático
+                continue                                            # reinicia o loop
+
+            # comportamento na posição 3 e 4 do diagrama sintático na parte statement
+            if position == 3 or position == 4:
+                subroutine_node = Parser.parse_expression()     # chama parse_expression
+                latest_node.children.append(subroutine_node)    # adiciona o Node gerado por parse_expression aos filhos do Print/Assign
+                position += 2                                   # atualiza a posição no diagrama sintático conforme a posição original
+                continue                                        # reinicia o loop
+
+            # comportamento na posição 5 do diagrama sintático na parte statement
+            if position == 5:
+                if token.type != "CLOSEPAR":                                        # espera-se apenas abertura de parênteses
+                    raise Exception("Fechamento de parênteses do print faltando")   # gera erro caso não for abertura de parênteses
+                Parser.tokenizer.select_next()                                      # consome o token
+                position = 6                                                        # atualiza a posição no diagrama sintático
+                continue                                                            # reinicia o loop
+            
+            # posição inútil, não tinha me tocado
+            if position == 6:
+                position = 0
+                continue
+
+            # comportamento na posição 7 (final) do diagrama sintático na parte statement
+            if position == 7:
+                break
+        
+        if latest_node is None: latest_node = NoOp()
+        return latest_node
 
 
     @staticmethod
@@ -202,4 +309,3 @@ class Parser:
                 continue                                        # reinicia o loop
                 
         return latest_node
-

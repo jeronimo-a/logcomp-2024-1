@@ -111,11 +111,3 @@ class Tokenizer:
         
         # se chegou até aqui, o caractere não pertence ao alfabeto
         raise Exception("Erro léxico")
-    
-
-    def test(self):
-        self.select_next()
-        while self.next.type != "EOF":
-            print(self.next.type, self.next.value)
-            self.select_next()
-        print(self.next.type, self.next.value)

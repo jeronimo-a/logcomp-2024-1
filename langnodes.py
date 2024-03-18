@@ -9,10 +9,8 @@ class Node:
     
     def View(self, counter: int=0, margin: str="  "):
         print(counter * margin, self.value, sep="")
-        try: self.children[0].View(counter + 1, margin)
-        except Exception: return
-        try: self.children[1].View(counter + 1, margin)
-        except Exception: return
+        for child in self.children:
+            child.View(counter + 1, margin)
 
 
 class BinOp(Node):
@@ -68,7 +66,7 @@ class Ident(Node):
 
     def Evaluate(self):
         try: result = self.table.get(self.value)
-        except KeyError: raise Exception("Variável %s não existe" % self.value)
+        except KeyError: raise Exception('Variável "%s" não existe' % self.value)
         return result
     
 
