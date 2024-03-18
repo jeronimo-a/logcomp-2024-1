@@ -2,9 +2,9 @@ from langtoken import Token
 
 class Tokenizer:
 
-    allowed_chars  = "abcdefghijklmnopqrstuvwxyz"
-    allowed_chars += allowed_chars.upper()
-    allowed_chars += "0123456789_"
+    letters        = "abcdefghijklmnopqrstuvwxyz"
+    letters       += letters.upper()
+    allowed_chars  = letters + "0123456789_"
     reserved_words = {"print": "PRINT"}
 
     def __init__(self, source: str):
@@ -39,8 +39,8 @@ class Tokenizer:
             if self.over(): break
 
         # se o caractere atual não for numérico nem + - / * () ou \n
-        if not self.over():
-            if self.source[self.position] in Tokenizer.allowed_chars and not self.source[self.position].isnumeric():
+        if not self.over() and token_type != "INT":
+            if self.source[self.position] in Tokenizer.letters:
                 identifier = ""
                 while self.source[self.position] in Tokenizer.allowed_chars:
                     identifier    += self.source[self.position]
@@ -55,6 +55,9 @@ class Tokenizer:
         
         # se o token já tiver sido definido como inteiro, cria o token e termina a função
         if token_type == "INT":
+            if not self.over():
+                if self.source[self.position] in Tokenizer.allowed_chars:
+                    raise Exception("Nome de variável não pode começar com número")
             self.next   = Token(token_type, token_value)
             return
         
@@ -109,3 +112,10 @@ class Tokenizer:
         # se chegou até aqui, o caractere não pertence ao alfabeto
         raise Exception("Erro léxico")
     
+
+    def test(self):
+        self.select_next()
+        while self.next.type != "EOF":
+            print(self.next.type, self.next.value)
+            self.select_next()
+        print(self.next.type, self.next.value)
