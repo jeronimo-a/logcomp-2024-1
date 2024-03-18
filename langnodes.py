@@ -57,4 +57,47 @@ class IntVal(Node):
 class NoOp(Node):
 
     def __init__(self):
-        super().__init__(None, [])
+        super().__init__(None)
+
+
+class Ident(Node):
+
+    def __init__(self, value: str, table):
+        super().__init__(value)
+        self.table = table
+
+    def Evaluate(self):
+        try: result = self.table.get(self.value)
+        except KeyError: raise Exception("Variável %s não existe" % self.value)
+        return result
+    
+
+class Print(Node):
+
+    def __init__(self):
+        super().__init__("print")
+
+    def Evaluate(self):
+        print(self.children[0].Evaluate())
+
+
+class Assign(Node):
+
+    def __init__(self, table):
+        super().__init__("=")
+        self.table = table
+    
+    def Evaluate(self):
+        variable = self.children[0].value
+        value = self.children[1].Evaluate()
+        self.table.set(variable, value)
+
+
+class Block(Node):
+
+    def __init__(self):
+        super().__init__("block")
+    
+    def Evaluate(self):
+        for child in self.children:
+            child.Evaluate()
