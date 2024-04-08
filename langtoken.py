@@ -3,7 +3,7 @@ import utils
 class Token:
 
     # gera as listas de tipos de tokens existentes e palavras reservadas
-    types, reserved_words = utils.read_alphabet_file("alphabet.txt")
+    types, reserved_words = utils.read_token_types_file("alphabet.txt")
 
     def __init__(self, token_type: str, value: str):
         if token_type not in Token.types: raise Exception("Tipo de Token inválido: %s" % token_type)

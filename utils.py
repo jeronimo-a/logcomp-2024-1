@@ -6,7 +6,7 @@ def remove_all_empty_str(iterable):
     return result
 
 
-def read_alphabet_file(filename):
+def read_token_types_file(filename):
 
     with open(filename) as file:
         contents = file.read().split("#")

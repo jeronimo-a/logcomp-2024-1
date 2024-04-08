@@ -1,0 +1,16 @@
+# Tipos de token
+EOF
+IDENT
+NUM
+PLUS
+MINUS
+MULT
+DIV
+OPENPAR
+CLOSEPAR
+ASSIGN
+NEWLINE
+PRINT
+
+# Palavras reservadas
+print
