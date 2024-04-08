@@ -1,3 +1,4 @@
+# Tipos de token
 EOF
 IDENT
 NUM
@@ -10,3 +11,6 @@ CLOSEPAR
 ASSIGN
 NEWLINE
 PRINT
+
+# Palavras reservadas
+print
