@@ -13,4 +13,4 @@ NEWLINE
 PRINT
 
 # Palavras reservadas
-print
+print	PRINT

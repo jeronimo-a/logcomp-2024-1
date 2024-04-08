@@ -8,12 +8,23 @@ def remove_all_empty_str(iterable):
 
 def read_token_types_file(filename):
 
-    with open(filename) as file:
-        contents = file.read().split("#")
-        
-    types = contents[1].split("\n")[1:]
-    words = contents[2].split("\n")[1:]
-    types = remove_all_empty_str(types)
-    words = remove_all_empty_str(words)
+    try:
+        with open(filename) as file:
+            contents = file.read().split("#")
+            
+        types = contents[1].split("\n")[1:]
+        words = contents[2].split("\n")[1:]
+        types = remove_all_empty_str(types)
+        words = remove_all_empty_str(words)
 
-    return types, words
+        words_dict = dict()
+        for word in words:
+            word = word.replace("\t", " ")
+            values = word.split(" ")
+            values = remove_all_empty_str(values)
+            words_dict[values[0]] = values[1]
+
+        return types, words_dict
+    
+    except:
+        raise Exception("Formatação inválida de tokentypes.txt")
