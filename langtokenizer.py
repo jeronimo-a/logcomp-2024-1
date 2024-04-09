@@ -5,7 +5,7 @@ class Tokenizer:
     letters        = "abcdefghijklmnopqrstuvwxyz"
     letters       += letters.upper()
     allowed_chars  = letters + "0123456789_"
-    reserved_words = {"print": "PRINT"}
+    reserved_words = Token.reserved_words
 
     def __init__(self, source: str):
         self.source     : str   = source    # o código fonte
@@ -15,6 +15,15 @@ class Tokenizer:
     def over(self):
         return self.position == len(self.source)
     
+    def test(self):
+        if self.position != 0:
+            raise Exception("select_next já chamada")
+        self.select_next()
+        while self.next.type != "EOF":
+            print(self.next.type)
+            self.select_next()
+        print(self.next.type)
+
     def select_next(self):
 
         token_value = str()
@@ -33,13 +42,13 @@ class Tokenizer:
         
         # se o caractere atual for um caractere numérico, concatena todos ao token_value até que não seja mais numérico
         while self.source[self.position].isnumeric():
-            token_type       = "INT" 
+            token_type       = "NUM" 
             token_value     += self.source[self.position]
             self.position   += 1
             if self.over(): break
 
         # se o caractere atual não for numérico nem + - / * () ou \n
-        if not self.over() and token_type != "INT":
+        if not self.over() and token_type != "NUM":
             if self.source[self.position] in Tokenizer.letters:
                 identifier = ""
                 while self.source[self.position] in Tokenizer.allowed_chars:
@@ -54,7 +63,7 @@ class Tokenizer:
                     return
         
         # se o token já tiver sido definido como inteiro, cria o token e termina a função
-        if token_type == "INT":
+        if token_type == "NUM":
             if not self.over():
                 if self.source[self.position] in Tokenizer.allowed_chars:
                     raise Exception("Nome de variável não pode começar com número")
