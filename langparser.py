@@ -67,84 +67,147 @@ class Parser:
         Vide diagrama_sintatico.png
         '''
 
-        position = 0        # posição no diagrama sintático, vide diagrama_sintatico.png
-        latest_node = None  # último node gerado
+        # se o primeiro token da linha for um IDENT
+        if Parser.tokenizer.next.type == "IDENT":
+
+            # gera o node IDENT
+            ident_node = Ident(Parser.tokenizer.next.value, Parser.symbol_table)
+            Parser.tokenizer.select_next()
+
+            # gera o node ASSIGN
+            Parser.expect("ASSIGN", "depois de uma variável no começo da linha")
+            assign_node = Assign(Parser.symbol_table)
+            Parser.tokenizer.select_next()
+
+            # chama o parse_boolean_expression
+            b_exp_root_node = Parser.parse_boolean_expression()
+
+            # linka o IDENT e o node raiz de parse_boolean_expression ao ASSIGN
+            assign_node.children.append(ident_node)
+            assign_node.children.append(b_exp_root_node)
+
+            # verifica sem tem NEWLINE
+            Parser.expect("NEWLINE", "depois de uma atribuição")
+            Parser.tokenizer.select_next()
+
+            return assign_node
         
-        # loop de percorrimento do diagrama sintático
-        while True:
+        # se o primeiro token da linha for um PRINT
+        if Parser.tokenizer.next.type == "PRINT":
 
-            token = Parser.tokenizer.next   # último token
+            # gera o node PRINT
+            print_node = Print()
+            Parser.tokenizer.select_next()
 
-            # comportamento da parte inicial do diagrama sintático na parte statement
-            if position == 0:
-                
-                # se for token do tipo "IDENT"
-                if token.type == "IDENT":
-                    Parser.tokenizer.select_next()                          # consome o token
-                    latest_node = Ident(token.value, Parser.symbol_table)   # cria o novo Node do tipo Ident
-                    position = 2                                            # atualiza a posição no diagrama sintático
-                    continue                                                # reinicia o loop
+            # verifica se abre parênteses
+            Parser.expect("OPENPAR", "para chamar a função print")
+            Parser.tokenizer.select_next()
 
-                # se for token do tipo "PRINT"
-                if token.type == "PRINT":
-                    Parser.tokenizer.select_next()  # consome o token
-                    latest_node = Print()           # cria o novo Node do tipo Print
-                    position = 1                    # atualiza a posição no diagrama sintático
-                    continue                        # reinicia o loop
-
-                # se for token do tipo "NEWLINE"
-                if token.type == "NEWLINE" or token.type == "EOF":
-                    Parser.tokenizer.select_next()  # consome o token
-                    position = 7                    # atualiza a posição no diagrama sintático
-                    continue                        # reinicia o loop
-
-                raise Exception("Erro de sintaxe")
-
-            # comportamento na posição 1 do diagrama sintático na parte statement
-            if position == 1:
-                if token.type != "OPENPAR":                                 # espera-se apenas abertura de parênteses
-                    raise Exception("Print requer abertura de parênteses")  # gera erro caso não for abertura de parênteses
-                Parser.tokenizer.select_next()                              # consome o token
-                position = 3                                                # atualiza a posição no diagrama sintático
-                continue                                                    # reinicia o loop
-
-            # comportamento na posição 2 do diagrama sintático na parte statement
-            if position == 2:
-                if token.type != "ASSIGN":                          # espera-se apenas o operador de atribuição
-                    raise Exception("Token de atribuição esperado") # gera erro caso não for abertura de parênteses
-                Parser.tokenizer.select_next()                      # consome o token
-                assign_node = Assign(Parser.symbol_table)           # cria o novo Node do tipo Assign
-                assign_node.children.append(latest_node)            # inclui o Ident gerado na posição 2 nos filhos do Assign
-                latest_node = assign_node                           # torna o Assign o latest_node
-                position = 4                                        # atualiza a posição no diagrama sintático
-                continue                                            # reinicia o loop
-
-            # comportamento na posição 3 e 4 do diagrama sintático na parte statement
-            if position == 3 or position == 4:
-                subroutine_node = Parser.parse_expression()     # chama parse_expression
-                latest_node.children.append(subroutine_node)    # adiciona o Node gerado por parse_expression aos filhos do Print/Assign
-                position += 2                                   # atualiza a posição no diagrama sintático conforme a posição original
-                continue                                        # reinicia o loop
-
-            # comportamento na posição 5 do diagrama sintático na parte statement
-            if position == 5:
-                if token.type != "CLOSEPAR":                                        # espera-se apenas abertura de parênteses
-                    raise Exception("Fechamento de parênteses do print faltando")   # gera erro caso não for abertura de parênteses
-                Parser.tokenizer.select_next()                                      # consome o token
-                position = 6                                                        # atualiza a posição no diagrama sintático
-                continue                                                            # reinicia o loop
+            # chama o parse_boolean_expression
+            b_exp_root_node = Parser.parse_boolean_expression()
             
-            # posição inútil, não tinha me tocado
-            if position == 6:
-                position = 0
-                continue
+            # verifica se tem fechamento de parênteses
+            Parser.expect("CLOSEPAR", "ao chamar a função print")
+            Parser.tokenizer.select_next()
 
-            # comportamento na posição 7 (final) do diagrama sintático na parte statement
-            if position == 7:
-                break
+            # linka o node raiz de parse_boolean_expression ao PRINT
+            print_node.children.append(b_exp_root_node)
+            
+            # verifica sem tem NEWLINE
+            Parser.expect("NEWLINE", "depois de uma chamada da função print")
+            Parser.tokenizer.select_next()
+
+            return print_node
         
-        if latest_node is None: latest_node = NoOp()
-        return latest_node
+        # se o primeiro token da linha for um WHILE
+        if Parser.tokenizer.next.type == "WHILE":
+
+            # gera o node WHILE
+            while_node = While()
+            Parser.tokenizer.select_next()
+
+            # chama o parse_boolean_expression
+            condition_node = Parser.parse_boolean_expression()
+
+            # linka o a raiz do boolean expression ao while como a condição de loop
+            while_node.children.append(condition_node)
+
+            # verifica se tem DO seguido de NEWLINE
+            Parser.expect("DO", "depois da condição de loop while")
+            Parser.tokenizer.select_next()
+            Parser.expect("NEWLINE", "depois do uma linha de loop while")
+            Parser.tokenizer.select_next()
+
+            # loop de coleta dos statements dentro do while usando um node block
+            block_node = Block()
+            while Parser.tokenizer.next.type != "END":
+                statement_node = Parser.parse_statement()
+                block_node.append(statement_node)
+
+            # linka o node block ao node while
+            while_node.children.append(block_node)
+
+            # consome o token END
+            Parser.tokenizer.select_next()
+
+            # verifica se tem NEWLINE
+            Parser.expect("NEWLINE", 'depois do "end" que fecha o while')
+            Parser.tokenizer.select_next()
+
+            return while_node
+        
+        # se o primeiro token da linha for um IF
+        if Parser.tokenizer.next.type == "IF":
+            
+            # gera o node IF
+            if_node = If()
+            Parser.tokenizer.select_next()
+
+            # chama o parse_boolean_expression
+            b_exp_root_node = Parser.parse_boolean_expression()
+
+            # linka a raiz do node da boolean expression ao node if
+            if_node.children.append(b_exp_root_node)
+
+            # verifica se tem THEN seguido de NEWLINE
+            Parser.expect("THEN", "depois da condição de if")
+            Parser.tokenizer.select_next()
+            Parser.expect("NEWLINE", "depois do uma linha de if")
+            Parser.tokenizer.select_next()
+
+            # gera os node blocks do if e do else e linka ao node do if
+            block_node_true = Block()
+            block_node_false = Block()
+            if_node.children.append(block_node_true)
+            if_node.children.append(block_node_false)
+
+            # loop de coleta dos statements dentro do if usando o block node do if
+            while Parser.tokenizer.next.type not in ["END", "ELSE"]:
+                statement_node = Parser.parse_statement()
+                block_node_true.children.append(statement_node)
+
+            # se o próximo token for ELSE
+            if Parser.tokenizer.next.type == "ELSE":
+                
+                # verifica se tem NEWLINE
+                Parser.expect("NEWLINE", "depois de else")
+                Parser.tokenizer.select_next()
+
+                # loop de coleta dos statements dentro do else usando o block node do else
+                while Parser.tokenizer.next.type != "END":
+                    statement_node = Parser.parse_statement()
+                    block_node_false.children.append(statement_node)
+
+            # se chegou aqui, o próximo token é um END
+            Parser.tokenizer.select_next()
+
+            # verifica se é NEWLINE
+            Parser.expect("NEWLINE", "depois do end de um bloco if else")
+
+            return if_node
+        
+        # gera erro caso chegar aqui
+        raise Exception("Erro de sintaxe")
 
 
     @staticmethod
@@ -187,6 +250,7 @@ class Parser:
                 # se chegou aqui, termina a função
                 break
         
+        if latest_node is None: raise Exception("latest node is None")
         return latest_node
     
 
@@ -230,8 +294,9 @@ class Parser:
                 # se chegou aqui, termina a função
                 break
         
+        if latest_node is None: raise Exception("latest node is None")
         return latest_node
-    
+
 
     @staticmethod
     def parse_factor():
@@ -239,73 +304,174 @@ class Parser:
         Implementação do factor do diagrama sintático
         Vide diagrama_sintatico.png
         '''
+                
+        # lida com números
+        if Parser.tokenizer.next.type == "NUM":
+            latest_node = IntVal(int(Parser.tokenizer.next.value))
+            Parser.tokenizer.select_next()
+            return latest_node
+
+        # lida com operadores unários
+        if Parser.tokenizer.next.type in ["PLUS", "MINUS", "NOT"]:
+            latest_node = UnOp(Parser.tokenizer.next.value)
+            Parser.tokenizer.select_next()
+            subroutine_node = Parser.parse_factor()
+            latest_node.children.append(subroutine_node)
+            return latest_node
+
+        # lida com parênteses
+        if Parser.tokenizer.next.type == "OPENPAR":
+            Parser.tokenizer.select_next()
+            latest_node = Parser.parse_boolean_expression()
+            if Parser.tokenizer.next.type != "CLOSEPAR": raise Exception("Parênteses sem fechar")
+            Parser.tokenizer.select_next()
+            return latest_node
+
+        # lida com variáveis
+        if Parser.tokenizer.next.type == "IDENT":
+            latest_node = Ident(Parser.tokenizer.next.value, Parser.symbol_table)
+            Parser.tokenizer.select_next()
+            return latest_node
+
+        # lida com read
+        if Parser.tokenizer.next.type == "READ":
+            latest_node = Read()
+            Parser.tokenizer.select_next()
+            if Parser.tokenizer.next.type != "CLOSEPAR": raise Exception("Chamada de read sem abertura de parênteses")
+            Parser.tokenizer.select_next()
+            if Parser.tokenizer.next.type != "CLOSEPAR": raise Exception("Chamada de read sem fechamento de parênteses")
+            Parser.tokenizer.select_next()
+            return latest_node
+            
+        # gera erro caso chegar aqui
+        raise Exception("Erro de sintaxe")
+    
+
+    @staticmethod
+    def parse_boolean_expression():
+        '''
+        Implementação do boolean expression do diagrama sintático
+        Vide diagrama_sintatico.png
+        '''
 
         position     = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
         latest_node  = None  # último node gerado
 
-        # loop de percorrimento do diagrama sintático
         while True:
 
-            token = Parser.tokenizer.next   # último token
+            token = Parser.tokenizer.next
 
-            # comportamento da posição inicial do diagrama na parte factor
+            # parte esquerda do diagrama sintático do boolean expression
             if position == 0:
-                
-                # lida com números
-                if token.type == "INT":
-                    Parser.tokenizer.select_next()          # consome o token
-                    latest_node = IntVal(int(token.value))  # cria o novo node
-                    position = 1                            # vai para a posição 1 do diagrama
-                    continue                                # reinicia o loop
+                subroutine_node = Parser.parse_boolean_term()
+                if latest_node is not None:
+                    latest_node.children.append(subroutine_node)
+                    break
+                position = 1
 
-                # lida com operadores unários
-                if token.type == "PLUS" or token.type == "MINUS":
-                    Parser.tokenizer.select_next()      # consome o token
-                    latest_node = UnOp(token.value)     # cria o novo node
-                    position = 2                        # vai para a posição 2 do diagrama
-                    continue                            # reinicia o loop
-
-                # lida com parênteses
-                if token.type == "OPENPAR":
-                    Parser.tokenizer.select_next()  # consome o token
-                    position = 3                    # vai para a posição 3 do diagrama
-                    continue                        # reinicia o loop
-
-                # lide com variáveis
-                if token.type == "IDENT":
-                    Parser.tokenizer.select_next()                          # consome o token
-                    latest_node = Ident(token.value, Parser.symbol_table)   # cria o novo node
-                    position = 1                                            # vai para a posição 1 do diagrama
-                    continue                                                # reinicia o loop
-
-                # gera erro caso chegar aqui
-                raise Exception("Erro de sintaxe")
-            
-            # comportamento da posição final do diagrama na parte factor
+            # parte direita do diagrama sintático do boolean expression
             if position == 1:
-                break   # apenas sai do loop
-
-            # comportamento da posição 2 do diagrama na parte factor, vide diagrama_sintatico.png
-            if position == 2:
-                subroutine_node = Parser.parse_factor()         # chama parse_factor de novo
-                latest_node.children.append(subroutine_node)    # adiciona o resultado da subrotina aos filhos do node desse escopo
-                position = 1                                    # vai para a posição final do diagrama na parte factor
-                continue                                        # reinicia o loop
-
-            # comportamento da posição 3 do diagrama na parte factor, vide diagrama_sintatico.png
-            if position == 3:
-                subroutine_node = Parser.parse_expression()             # chama parse_expression de novo
-                try: latest_node.children.append(subroutine_node)       # adiciona o resultado da subrotina aos filhos do node desse escopo, se houver node desse escopo
-                except AttributeError: latest_node = subroutine_node    # se não houver, torna o resultado da subrotina o latest node
-                position = 4                                            # vai para a posição 4 do diagrama na parte factor
-                continue                                                # reinicia o loop
-
-            # comportamento da posição 4 do diagram na parte factor, vide diagrama_sintatico.png
-            if position == 4:
-                if token.type != "CLOSEPAR":                    # verifica se é fechamento de parênteses
-                    raise Exception("Parênteses sem fechar")    # se não for, gera um erro
-                Parser.tokenizer.select_next()                  # consome o token
-                position = 1                                    # vai para a posição 1 do diagrama na parte factor
-                continue                                        # reinicia o loop
                 
+                if token.type == "OR":
+                    Parser.tokenizer.select_next()
+                    latest_node = BinOp(token.value)
+                    latest_node.children.append(subroutine_node)
+                    position = 0
+                    continue
+                
+                latest_node = subroutine_node
+                break
+
+        if latest_node is None: raise Exception("latest node is None")
         return latest_node
+    
+
+    @staticmethod
+    def parse_boolean_term():
+        '''
+        Implementação do boolean term do diagrama sintático
+        Vide diagrama_sintatico.png
+        '''
+
+        position     = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
+        latest_node  = None  # último node gerado
+
+        while True:
+
+            token = Parser.tokenizer.next
+
+            # parte esquerda do diagrama sintático do boolean term
+            if position == 0:
+                subroutine_node = Parser.parse_rel_expression()
+                if latest_node is not None:
+                    latest_node.children.append(subroutine_node)
+                    break
+                position = 1
+
+            # parte direita do diagrama sintático do boolean term
+            if position == 1:
+                
+                if token.type == "AND":
+                    Parser.tokenizer.select_next()
+                    latest_node = BinOp(token.value)
+                    latest_node.children.append(subroutine_node)
+                    position = 0
+                    continue
+                
+                latest_node = subroutine_node
+                break
+
+        if latest_node is None: raise Exception("latest node is None")
+        return latest_node
+    
+
+    @staticmethod
+    def parse_rel_expression():
+        '''
+        Implementação do rel expression do diagrama sintático
+        Vide diagrama_sintatico.png
+        '''
+
+        position     = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
+        latest_node  = None  # último node gerado
+
+        while True:
+
+            token = Parser.tokenizer.next
+
+            # parte esquerda do diagrama sintático do rel expression
+            if position == 0:
+                subroutine_node = Parser.parse_expression()
+                if latest_node is not None:
+                    latest_node.children.append(subroutine_node)
+                    break
+                position = 1
+                continue
+
+            # parte direita do diagrama sintático do rel expression
+            if position == 1:
+                
+                if token.type in ["EQUAL", "GREATER", "LESS"]:
+                    Parser.tokenizer.select_next()
+                    latest_node = BinOp(token.value)
+                    latest_node.children.append(subroutine_node)
+                    position = 0
+                    continue
+                
+                latest_node = subroutine_node
+                break
+        
+        if latest_node is None: raise Exception("latest node is None")
+        return latest_node
+
+
+    @staticmethod
+    def expect(token_type, extra_context=None):
+        ''' Verifica se o próximo token é de um determinado tipo '''
+
+        error_message = 'Erro de sintaxe, espera-se "%s"' % token_type
+        if extra_context is not None:
+            error_message += " " + extra_context
+
+        if Parser.tokenizer.next.type != token_type:
+            raise Exception(error_message)

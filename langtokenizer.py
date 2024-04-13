@@ -15,7 +15,8 @@ class Tokenizer:
         "do"    : "DO",
         "then"  : "THEN",
         "else"  : "ELSE",
-        "read"  : "READ"
+        "read"  : "READ",
+        "not"   : "NOT"
     }
 
     def __init__(self, source: str):
@@ -35,6 +36,10 @@ class Tokenizer:
         return self.position == len(self.source)
     
     def select_next(self):
+        self._select_next()
+        print("next token: ", self.next.type, self.next.value)
+
+    def _select_next(self):
 
         token_value = str()
         token_type  = str()
@@ -43,8 +48,8 @@ class Tokenizer:
             self.next = Token("EOF", "")
             return
 
-        # se for espaço, pula
-        while self.source[self.position] == " ":
+        # se for espaço ou tab, pula
+        while self.source[self.position] in [" ", "\t"]:
             self.position += 1
             if self.over():
                 self.next = Token("EOF", "")
@@ -52,13 +57,13 @@ class Tokenizer:
         
         # se o caractere atual for um caractere numérico, concatena todos ao token_value até que não seja mais numérico
         while self.source[self.position].isnumeric():
-            token_type       = "INT" 
+            token_type       = "NUM" 
             token_value     += self.source[self.position]
             self.position   += 1
             if self.over(): break
 
         # se o caractere atual não for numérico nem + - / * () ou \n
-        if not self.over() and token_type != "INT":
+        if not self.over() and token_type != "NUM":
             if self.source[self.position] in Tokenizer.letters:
                 identifier = ""
                 while self.source[self.position] in Tokenizer.allowed_chars:
@@ -73,7 +78,7 @@ class Tokenizer:
                     return
         
         # se o token já tiver sido definido como inteiro, cria o token e termina a função
-        if token_type == "INT":
+        if token_type == "NUM":
             if not self.over():
                 if self.source[self.position] in Tokenizer.allowed_chars:
                     raise Exception("Nome de variável não pode começar com número")
