@@ -5,12 +5,31 @@ class Tokenizer:
     letters        = "abcdefghijklmnopqrstuvwxyz"
     letters       += letters.upper()
     allowed_chars  = letters + "0123456789_"
-    reserved_words = {"print": "PRINT"}
+    reserved_words = {
+        "print" : "PRINT",
+        "and"   : "AND",
+        "or"    : "OR",
+        "if"    : "IF",
+        "while" : "WHILE",
+        "end"   : "END",
+        "do"    : "DO",
+        "then"  : "THEN",
+        "else"  : "ELSE",
+        "read"  : "READ"
+    }
 
     def __init__(self, source: str):
         self.source     : str   = source    # o código fonte
         self.position   : int   = 0         # posição atual que está sendo separada
         self.next       : Token = None      # o último token separado
+
+    def test(self):
+        if self.position != 0: raise Exception("select_next já chamado")
+        self.select_next()
+        while self.next.type != "EOF":
+            print(self.next.type, self.next.value)
+            self.select_next()
+        print(self.next.type, self.next.value)
 
     def over(self):
         return self.position == len(self.source)
@@ -97,8 +116,19 @@ class Tokenizer:
             self.position  += 1
             return
         
-        # se for assignment, cria o token e termina a função
+        # se for =
         if self.source[self.position] == "=":
+
+            # se for relacional de igualdade, cria o token e termina a função
+            try:
+                if self.source[self.position + 1] == "=":
+                    self.next       = Token("EQUAL", "==")
+                    self.position  += 2
+                    return
+            except IndexError:
+                pass
+
+            # se não for relaciona de igualdade, cria o token de ASSIGN e termina a função
             self.next       = Token("ASSIGN", "=")
             self.position  += 1
             return
@@ -109,5 +139,17 @@ class Tokenizer:
             self.position  += 1
             return
         
+        # se for "maior que", cria o token e termina a função
+        if self.source[self.position] == ">":
+            self.next       = Token("GREATER", ">")
+            self.position  += 1
+            return
+        
+        # se for "menor que", cria o token e termina a função
+        if self.source[self.position] == "<":
+            self.next       = Token("LESS", "<")
+            self.position  += 1
+            return
+
         # se chegou até aqui, o caractere não pertence ao alfabeto
         raise Exception("Erro léxico")
