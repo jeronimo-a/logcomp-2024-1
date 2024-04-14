@@ -3,12 +3,6 @@ class PrePro:
     @staticmethod
     def filter(text: str):
 
-        # remove linhas vazias
-        new_text = text.replace("\n\n", "\n")
-        while new_text != text:
-            text = new_text
-            new_text = text.replace("\n\n", "\n")
-
         # remove comentários
         while True:
             try: start = str.index(text, "--")
@@ -22,6 +16,13 @@ class PrePro:
                 break
             text = text[:start] + text[end:]
 
-        if text[-1] != "\n": text += "\n"
+        # remove linhas vazias
+        new_text = text.replace("\n\n", "\n")
+        while new_text != text:
+            text = new_text
+            new_text = text.replace("\n\n", "\n")
+
+        if text[-1] != "\n":
+            text += "\n"
 
         return text
