@@ -256,7 +256,6 @@ class Parser:
                 # se chegou aqui, termina a função
                 break
         
-        if latest_node is None: raise Exception("latest node is None")
         return latest_node
     
 
@@ -300,7 +299,6 @@ class Parser:
                 # se chegou aqui, termina a função
                 break
         
-        if latest_node is None: raise Exception("latest node is None")
         return latest_node
 
 
@@ -329,7 +327,7 @@ class Parser:
         if Parser.tokenizer.next.type == "OPENPAR":
             Parser.tokenizer.select_next()
             latest_node = Parser.parse_boolean_expression()
-            if Parser.tokenizer.next.type != "CLOSEPAR": raise Exception("Parênteses sem fechar")
+            Parser.expect("CLOSEPAR")
             Parser.tokenizer.select_next()
             return latest_node
 
@@ -343,9 +341,9 @@ class Parser:
         if Parser.tokenizer.next.type == "READ":
             latest_node = Read()
             Parser.tokenizer.select_next()
-            if Parser.tokenizer.next.type != "OPENPAR": raise Exception("Chamada de read sem abertura de parênteses")
+            Parser.expect("OPENPAR", "para chamar a função read") 
             Parser.tokenizer.select_next()
-            if Parser.tokenizer.next.type != "CLOSEPAR": raise Exception("Chamada de read sem fechamento de parênteses")
+            Parser.expect("CLOSEPAR", "para chamar a função read") 
             Parser.tokenizer.select_next()
             return latest_node
             
