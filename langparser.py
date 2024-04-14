@@ -55,7 +55,9 @@ class Parser:
         root = Block()
 
         while Parser.tokenizer.next.type != "EOF":
-            root.children.append(Parser.parse_statement())
+            statement_root_node = Parser.parse_statement()
+            if statement_root_node is not None:
+                root.children.append(statement_root_node)
 
         return root
 
@@ -100,7 +102,7 @@ class Parser:
             Parser.tokenizer.select_next()
 
             # verifica se abre parênteses
-            Parser.expect("OPENPAR", "para chamar a função print")
+            Parser.expect("OPENPAR", "para chamar a função ")
             Parser.tokenizer.select_next()
 
             # chama o parse_boolean_expression
@@ -142,7 +144,7 @@ class Parser:
             block_node = Block()
             while Parser.tokenizer.next.type != "END":
                 statement_node = Parser.parse_statement()
-                block_node.append(statement_node)
+                block_node.children.append(statement_node)
 
             # linka o node block ao node while
             while_node.children.append(block_node)
@@ -188,6 +190,9 @@ class Parser:
 
             # se o próximo token for ELSE
             if Parser.tokenizer.next.type == "ELSE":
+
+                # consome o else
+                Parser.tokenizer.select_next()
                 
                 # verifica se tem NEWLINE
                 Parser.expect("NEWLINE", "depois de else")
@@ -203,6 +208,7 @@ class Parser:
 
             # verifica se é NEWLINE
             Parser.expect("NEWLINE", "depois do end de um bloco if else")
+            Parser.tokenizer.select_next()
 
             return if_node
         
@@ -337,7 +343,7 @@ class Parser:
         if Parser.tokenizer.next.type == "READ":
             latest_node = Read()
             Parser.tokenizer.select_next()
-            if Parser.tokenizer.next.type != "CLOSEPAR": raise Exception("Chamada de read sem abertura de parênteses")
+            if Parser.tokenizer.next.type != "OPENPAR": raise Exception("Chamada de read sem abertura de parênteses")
             Parser.tokenizer.select_next()
             if Parser.tokenizer.next.type != "CLOSEPAR": raise Exception("Chamada de read sem fechamento de parênteses")
             Parser.tokenizer.select_next()
@@ -354,36 +360,33 @@ class Parser:
         Vide diagrama_sintatico.png
         '''
 
-        position     = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
-        latest_node  = None  # último node gerado
+        position = 0    # posição no diagrama sintático, 0 para esquerda, 1 para direita
+        or_node = None
 
         while True:
 
-            token = Parser.tokenizer.next
-
-            # parte esquerda do diagrama sintático do boolean expression
             if position == 0:
-                subroutine_node = Parser.parse_boolean_term()
-                if latest_node is not None:
-                    latest_node.children.append(subroutine_node)
-                    break
+                b_term_root_node = Parser.parse_boolean_term()
                 position = 1
 
-            # parte direita do diagrama sintático do boolean expression
             if position == 1:
-                
-                if token.type == "OR":
+
+                if Parser.tokenizer.next.type == "OR" and or_node is None:
+                    or_node = BinOp("or")
                     Parser.tokenizer.select_next()
-                    latest_node = BinOp(token.value)
-                    latest_node.children.append(subroutine_node)
+                    or_node.children.append(b_term_root_node)
                     position = 0
                     continue
-                
-                latest_node = subroutine_node
-                break
 
-        if latest_node is None: raise Exception("latest node is None")
-        return latest_node
+                if or_node is not None:
+                    or_node.children.append(b_term_root_node)
+                    break
+
+                break
+        
+        if or_node is None: root_node = b_term_root_node
+        else: root_node = or_node
+        return root_node
     
 
     @staticmethod
@@ -393,36 +396,33 @@ class Parser:
         Vide diagrama_sintatico.png
         '''
 
-        position     = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
-        latest_node  = None  # último node gerado
+        position = 0    # posição no diagrama sintático, 0 para esquerda, 1 para direita
+        and_node = None
 
         while True:
 
-            token = Parser.tokenizer.next
-
-            # parte esquerda do diagrama sintático do boolean term
             if position == 0:
-                subroutine_node = Parser.parse_rel_expression()
-                if latest_node is not None:
-                    latest_node.children.append(subroutine_node)
-                    break
+                r_exp_root_node = Parser.parse_rel_expression()
                 position = 1
 
-            # parte direita do diagrama sintático do boolean term
             if position == 1:
-                
-                if token.type == "AND":
+
+                if Parser.tokenizer.next.type == "AND" and and_node is None:
+                    and_node = BinOp("and")
                     Parser.tokenizer.select_next()
-                    latest_node = BinOp(token.value)
-                    latest_node.children.append(subroutine_node)
+                    and_node.children.append(r_exp_root_node)
                     position = 0
                     continue
-                
-                latest_node = subroutine_node
-                break
 
-        if latest_node is None: raise Exception("latest node is None")
-        return latest_node
+                if and_node is not None:
+                    and_node.children.append(r_exp_root_node)
+                    break
+
+                break
+        
+        if and_node is None: root_node = r_exp_root_node
+        else: root_node = and_node
+        return root_node
     
 
     @staticmethod
@@ -432,37 +432,33 @@ class Parser:
         Vide diagrama_sintatico.png
         '''
 
-        position     = 0     # posição no diagrama sintático, vide diagrama_sintatico.png
-        latest_node  = None  # último node gerado
+        position = 0    # posição no diagrama sintático, 0 para esquerda, 1 para direita
+        relational_node = None
 
         while True:
 
-            token = Parser.tokenizer.next
-
-            # parte esquerda do diagrama sintático do rel expression
             if position == 0:
-                subroutine_node = Parser.parse_expression()
-                if latest_node is not None:
-                    latest_node.children.append(subroutine_node)
-                    break
+                exp_root_node = Parser.parse_expression()
                 position = 1
-                continue
 
-            # parte direita do diagrama sintático do rel expression
             if position == 1:
-                
-                if token.type in ["EQUAL", "GREATER", "LESS"]:
+
+                if Parser.tokenizer.next.type in ["EQUAL", "GREATER", "LESS"] and relational_node is None:
+                    relational_node = BinOp(Parser.tokenizer.next.value)
                     Parser.tokenizer.select_next()
-                    latest_node = BinOp(token.value)
-                    latest_node.children.append(subroutine_node)
+                    relational_node.children.append(exp_root_node)
                     position = 0
                     continue
-                
-                latest_node = subroutine_node
+
+                if relational_node is not None:
+                    relational_node.children.append(exp_root_node)
+                    break
+
                 break
         
-        if latest_node is None: raise Exception("latest node is None")
-        return latest_node
+        if relational_node is None: root_node = exp_root_node
+        else: root_node = relational_node
+        return root_node
 
 
     @staticmethod

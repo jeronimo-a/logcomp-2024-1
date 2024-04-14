@@ -22,4 +22,6 @@ class PrePro:
                 break
             text = text[:start] + text[end:]
 
+        if text[-1] != "\n": text += "\n"
+
         return text

@@ -3,7 +3,6 @@ class Node:
     def __init__(self, value):
         self.value    = value
         self.children = list()
-        print("New node: ", self.value)
 
     def Evaluate(self):
         return self.value
@@ -28,11 +27,11 @@ class BinOp(Node):
         if self.value == "-"    : return evaluation_l - evaluation_r
         if self.value == "*"    : return evaluation_l * evaluation_r
         if self.value == "/"    : return evaluation_l // evaluation_r
-        if self.value == "or"   : return evaluation_l or evaluation_r
-        if self.value == "and"  : return evaluation_l and evaluation_r
-        if self.value == "=="   : return evaluation_l == evaluation_r
-        if self.value == ">"    : return evaluation_l > evaluation_r
-        if self.value == "<"    : return evaluation_l < evaluation_r
+        if self.value == "or"   : return int(bool(evaluation_l) or bool(evaluation_r))
+        if self.value == "and"  : return int(bool(evaluation_l) and bool(evaluation_r))
+        if self.value == "=="   : return int(evaluation_l == evaluation_r)
+        if self.value == ">"    : return int(evaluation_l > evaluation_r)
+        if self.value == "<"    : return int(evaluation_l < evaluation_r)
 
         raise Exception("BinOp Node com valor desconhecido")
 
@@ -47,7 +46,7 @@ class UnOp(Node):
         child_evaluation = self.children[0].Evaluate()
         if self.value == "+"    : return child_evaluation
         if self.value == "-"    : return child_evaluation * -1
-        if self.value == "not"  : return not child_evaluation
+        if self.value == "not"  : return int(not bool(child_evaluation))
         raise Exception("UnOp Node com valor desconhecido")
 
 
@@ -93,7 +92,7 @@ class Read(Node):
         super().__init__("read")
 
     def Evaluate(self):
-        return input()
+        return int(input())
 
 
 class Assign(Node):
