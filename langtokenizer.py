@@ -16,7 +16,8 @@ class Tokenizer:
         "then"  : "THEN",
         "else"  : "ELSE",
         "read"  : "READ",
-        "not"   : "NOT"
+        "not"   : "NOT",
+        "local" : "VARDEC"
     }
 
     def __init__(self, source: str):
@@ -153,6 +154,23 @@ class Tokenizer:
         if self.source[self.position] == "<":
             self.next       = Token("LESS", "<")
             self.position  += 1
+            return
+        
+        # se for aspas, começa a coleta de string
+        if self.source[self.position] == '"':
+            
+            self.position += 1
+            string = str()
+
+            # loop de coleta da string
+            while self.source[self.position] != '"':
+                string += self.source[self.position]
+                self.position += 1
+                if self.over(): raise Exception("Aspas sem fechar")
+
+            # criação do token
+            self.position += 1
+            self.next = Token("STR", string)
             return
 
         # se chegou até aqui, o caractere não pertence ao alfabeto
