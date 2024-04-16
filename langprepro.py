@@ -3,17 +3,20 @@ class PrePro:
     @staticmethod
     def filter(text: str):
 
-        # remove comentários
+        # loop de remoção de comentários
         while True:
-            try: start = str.index(text, "--")
-            except ValueError: break
+
+            try: start = str.index(text, "--")  # índice de início do primeiro comentário
+            except ValueError: break            # se não achar, sai do loop de remoção
+
+            # procura o final da linha, consequentemente, o final do comentário
             end = start
             try:
                 while text[end] != "\n":
                     end += 1
-            except IndexError:
-                text = text[:start]
-                break
+            except IndexError: pass # passa porque nesse caso end = len(text), e text[end:] = ""
+
+            # remove o comentário
             text = text[:start] + text[end:]
 
         # remove linhas vazias fora de strings
