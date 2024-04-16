@@ -33,4 +33,8 @@ class PrePro:
         if text[-1] != "\n":
             text += "\n"
 
+        # remove newline do começo
+        if text[0] == "\n":
+            text = text[1:]
+
         return text
