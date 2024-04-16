@@ -21,7 +21,7 @@ class Parser:
         Retorna o resultado do método Evaluate do Node raíz da árvore
         '''
 
-        _ = Parser.inrun(source, filter=True)
+        _ = Parser._run(source)
 
         if (Parser.tokenizer.next.type != "EOF"):
             raise Exception("Erro de sintaxe")
@@ -31,12 +31,12 @@ class Parser:
     def testrun(source_file: str):
         with open(source_file) as file:
             source = file.read()
-        return Parser.inrun(source, True)
+        return Parser._run(source)
 
 
     @staticmethod
-    def inrun(source: str, filter: bool=False):
-        if filter: source = PrePro.filter(source)
+    def _run(source: str):
+        source = PrePro.filter(source)
         Parser.tokenizer = Tokenizer(source)
         Parser.tokenizer.select_next()
         Parser.symbol_table = SymbolTable()
@@ -213,6 +213,7 @@ class Parser:
             return if_node
         
         # gera erro caso chegar aqui
+        print(Parser.tokenizer.next.type)
         raise Exception("Erro de sintaxe")
 
 
