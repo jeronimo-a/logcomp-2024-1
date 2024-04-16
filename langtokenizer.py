@@ -172,6 +172,21 @@ class Tokenizer:
             self.position += 1
             self.next = Token("STR", string)
             return
+        
+        # se for ponto, verifica se o próximo é também e cria o token de concatenação de string
+        if self.source[self.position] == ".":
+            
+            # verifica se o próximo também é ponto
+            try:
+                if self.source[self.position + 1] != ".":
+                    raise Exception('Caractere inválido: .')
+            except IndexError: raise Exception('Caractere inválido: "."')
+            
+            # cria o token
+            self.position += 2
+            self.next = Token("CAT", "..")
+            return
+            
 
         # se chegou até aqui, o caractere não pertence ao alfabeto
         raise Exception("Erro léxico")
