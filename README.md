@@ -5,7 +5,7 @@ Jerônimo de Abreu Afrange
 ![git status](http://3.129.230.99/svg/jeronimo-a/logcomp-2024-1)
 
 ## EBNF
-`
+```
 digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 
 letter = "A" | "B" | "C" | "D" | "E" | "F" | "G"
@@ -42,7 +42,7 @@ STAT_IF       = "if", B_EXPRESSION, "then", "\n", {STAT}, ["else", "\n", {STAT}]
 STAT_LOCAL    = "local", ident, ["=", B_EXPRESSION];
 
 STAT = [STAT_IDENT | STAT_PRINT | ((STAT_WHILE | STAT_IF), "end") | STAT_LOCAL], "\n";
-`
+```
 
 ## Diagrama Sintático
 ![image](diagrama_sintatico.png)
