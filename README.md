@@ -23,9 +23,9 @@ symbol = "[" | "]" | "{" | "}" | "(" | ")" | "<" | ">"
 
 num   = digit, {digit};
 ident = letter, {digit | letter | "_"};
-str   = {digit | letter | symbol};
+str   = '"', {digit | letter | symbol}, '"';
 
-BLOCK = {STAT};
+BLOCK = {STATEMENT};
 
 FACTOR = num | str | ident | ("+" | "-" | "not", FACTOR) | ("(", B_EXPRESSION, ")") | ("read", "(", ")");
 
@@ -37,11 +37,11 @@ B_EXPRESSION = B_TERM, {"or", B_TERM};
 
 STAT_IDENT    = ident, "=", B_EXPRESSION;
 STAT_PRINT    = "print", "(", B_EXPRESSION, ")";
-STAT_WHILE    = "while", B_EXPRESSION, "do", "\n", {STAT};
-STAT_IF       = "if", B_EXPRESSION, "then", "\n", {STAT}, ["else", "\n", {STAT}];
+STAT_WHILE    = "while", B_EXPRESSION, "do", "\n", {STATEMENT};
+STAT_IF       = "if", B_EXPRESSION, "then", "\n", {STATEMENT}, ["else", "\n", {STATEMENT}];
 STAT_LOCAL    = "local", ident, ["=", B_EXPRESSION];
 
-STAT = [STAT_IDENT | STAT_PRINT | ((STAT_WHILE | STAT_IF), "end") | STAT_LOCAL], "\n";
+STATEMENT = [STAT_IDENT | STAT_PRINT | ((STAT_WHILE | STAT_IF), "end") | STAT_LOCAL], "\n";
 ```
 
 ## Diagrama Sintático
