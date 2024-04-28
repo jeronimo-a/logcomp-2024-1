@@ -104,7 +104,8 @@ class Assign(Node):
     def Evaluate(self):
         variable = self.children[0].value
         value = self.children[1].Evaluate()
-        self.table.set(variable, value)
+        try: self.table.set(variable, value)
+        except KeyError: raise Exception('Variável "%s" não existe' % self.value)
 
 
 class Block(Node):
@@ -135,3 +136,14 @@ class If(Node):
     def Evaluate(self):
         if self.children[0]: self.children[1].Evaluate()    # Block
         else: self.children[2].Evaluate()                   # Block
+
+
+class Vardec(Node):
+
+    def __init__(self, table):
+        super().__init__("local")
+        self.table = table
+
+    def Evaluate(self):
+        variable = self.children[0].value
+        self.table.init(variable)
