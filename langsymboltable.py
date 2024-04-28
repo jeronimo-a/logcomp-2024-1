@@ -14,5 +14,9 @@ class SymbolTable:
         self.type_table[key] = type
 
     def init(self, key: str):
+        try: 
+            self.get(key)
+            raise ValueError('Variável "%s" já foi declarada.' % key)
+        except KeyError: pass
         self.value_table[key] = None
         self.type_table[key] = None
