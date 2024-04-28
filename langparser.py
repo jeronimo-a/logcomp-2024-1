@@ -212,6 +212,37 @@ class Parser:
 
             return if_node
         
+        # se o primeiro token da linha for um VARDEC
+        if Parser.tokenizer.next.type == "VARDEC":
+
+            # gera o node VARDEC
+            Parser.tokenizer.select_next()
+            Parser.expect("IDENT", "um identificador depois de uma declaração de variável.")
+            vardec_node = Vardec(Parser.tokenizer.next.value, Parser.symbol_table)
+
+            # gera o node IDENT que vem em seguida
+            ident_node = Ident(Parser.tokenizer.next.value, Parser.symbol_table)
+            Parser.tokenizer.select_next()
+
+            # se o próximo for ASSIGN
+            if Parser.tokenizer.next.type == "ASSIGN":
+
+                # gera o node ASSIGN, adicona o IDENT ao seus filhos e o adiciona aos filhos de VARDEC
+                assign_node = Assign(Parser.symbol_table)
+                vardec_node.children.append(assign_node)
+                assign_node.children.append(ident_node)
+                Parser.tokenizer.select_next()
+
+                # chama boolean expression e adiciona o root aos filhos de ASSIGN
+                b_exp_root_node = Parser.parse_boolean_expression()
+                assign_node.children.append(b_exp_root_node)
+            
+            # se o próximo não for ASSIGN, espera um newline
+            Parser.expect("NEWLINE", "uma quebra de linha depois de declarar uma variável.")
+            Parser.tokenizer.select_next()
+
+            return vardec_node
+        
         # gera erro caso chegar aqui
         print(Parser.tokenizer.next.type)
         raise Exception("Erro de sintaxe")
