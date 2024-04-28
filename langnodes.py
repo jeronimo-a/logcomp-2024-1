@@ -111,7 +111,7 @@ class Assign(Node):
 class Block(Node):
 
     def __init__(self):
-        super().__init__("block")
+        super().__init__("%BLOCK%")
     
     def Evaluate(self):
         for child in self.children:
