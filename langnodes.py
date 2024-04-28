@@ -108,7 +108,7 @@ class Read(Node):
         super().__init__("read")
 
     def Evaluate(self):
-        return input(), "str"
+        return int(input()), "int"
 
 
 class Assign(Node):
@@ -140,7 +140,7 @@ class While(Node):
         super().__init__("while")
 
     def Evaluate(self):
-        while self.children[0].Evaluate():
+        while self.children[0].Evaluate()[0]:
             self.children[1].Evaluate()     # Block
 
 
@@ -150,7 +150,7 @@ class If(Node):
         super().__init__("if")
 
     def Evaluate(self):
-        if self.children[0]: self.children[1].Evaluate()    # Block
+        if self.children[0].Evaluate()[0]: self.children[1].Evaluate()    # Block
         else: self.children[2].Evaluate()                   # Block
 
 
