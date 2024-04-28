@@ -5,7 +5,7 @@ class Node:
         self.children = list()
 
     def Evaluate(self):
-        return self.value
+        return self.value, None
     
     def View(self, counter: int=0, margin: str="  "):
         print(counter * margin, self.value, sep="")
@@ -20,34 +20,41 @@ class BinOp(Node):
 
     def Evaluate(self):
 
-        evaluation_l = self.children[0].Evaluate()
-        evaluation_r = self.children[1].Evaluate()
+        value_l, type_l = self.children[0].Evaluate()
+        value_r, type_r = self.children[1].Evaluate()
+        mixed = type_l != type_r
 
-        if self.value == "+"    : return evaluation_l + evaluation_r
-        if self.value == "-"    : return evaluation_l - evaluation_r
-        if self.value == "*"    : return evaluation_l * evaluation_r
-        if self.value == "/"    : return evaluation_l // evaluation_r
-        if self.value == "or"   : return int(bool(evaluation_l) or bool(evaluation_r))
-        if self.value == "and"  : return int(bool(evaluation_l) and bool(evaluation_r))
-        if self.value == "=="   : return int(evaluation_l == evaluation_r)
-        if self.value == ">"    : return int(evaluation_l > evaluation_r)
-        if self.value == "<"    : return int(evaluation_l < evaluation_r)
+        if mixed:
+            if self.value == ".."   : return str(value_l) + str(value_r)         , "str"
+            if self.value == "or"   : return int(bool(value_l) or bool(value_r)) , "int"
+            if self.value == "and"  : return int(bool(value_l) and bool(value_r)), "int"
+        
+        if not mixed:
+            if self.value == "=="   : return int(value_l == value_r), type_l
+            if self.value == "<"    : return int(value_l < value_r) , type_l
+            if self.value == ">"    : return int(value_l > value_r) , type_l
 
-        raise Exception("BinOp Node com valor desconhecido")
+        if not mixed and value_l == "int":
+            if self.value == "+"    : return value_l + value_r , "int"
+            if self.value == "-"    : return value_l - value_r , "int"
+            if self.value == "*"    : return value_l * value_r , "int"
+            if self.value == "/"    : return value_l // value_r, "int"
+
+        raise Exception("Tipos errados para %s, %s e %s" % (self.value, type_l, type_r))
 
 
 class UnOp(Node):
-
 
     def __init__(self, value: str):
         super().__init__(value)
 
     def Evaluate(self):
-        child_evaluation = self.children[0].Evaluate()
-        if self.value == "+"    : return child_evaluation
-        if self.value == "-"    : return child_evaluation * -1
-        if self.value == "not"  : return int(not bool(child_evaluation))
-        raise Exception("UnOp Node com valor desconhecido")
+        child_value, child_type = self.children[0].Evaluate()
+        if child_type != "int": raise Exception("UnOp funciona apenas com int, não com %s" % child_type)
+        if self.value == "+"    : return child_value, "int"
+        if self.value == "-"    : return child_value * -1, "int"
+        if self.value == "not"  : return int(not bool(child_value)), "int"
+        raise Exception('UnOp Node com valor desconhecido: "%s"' % self.value)
 
 
 class IntVal(Node):
@@ -56,7 +63,7 @@ class IntVal(Node):
         super().__init__(value)
 
     def Evaluate(self):
-        return int(self.value)
+        return int(self.value), "int"
     
 
 class StrVal(Node):
@@ -65,7 +72,7 @@ class StrVal(Node):
         super().__init__(value)
     
     def Evaluate(self):
-        return str(self.value)
+        return str(self.value), "str"
 
 
 class NoOp(Node):
@@ -101,7 +108,7 @@ class Read(Node):
         super().__init__("read")
 
     def Evaluate(self):
-        return int(input())
+        return input(), "str"
 
 
 class Assign(Node):
@@ -112,8 +119,8 @@ class Assign(Node):
     
     def Evaluate(self):
         variable = self.children[0].value
-        value = self.children[1].Evaluate()
-        try: self.table.set(variable, value)
+        value, type = self.children[1].Evaluate()
+        try: self.table.set(variable, value, type)
         except KeyError: raise Exception('Variável "%s" não existe' % self.value)
 
 
