@@ -1,14 +1,18 @@
 class SymbolTable:
 
     def __init__(self):
-        self.table = dict()
+        self.value_table = dict()
+        self.type_table = dict()
 
     def get(self, key: str):
-        return self.table[key]
+        return self.value_table[key], self.type_table[key]
     
-    def set(self, key: str, value):
-        current_value = self.table[key]
-        self.table[key] = value
+    def set(self, key: str, value, type: str):
+        _ = self.value_table[key]
+        _ = self.type_table[key]
+        self.value_table[key] = value
+        self.type_table[key] = type
 
     def init(self, key: str):
-        self.table[key] = None
+        self.value_table[key] = None
+        self.type_table[key] = None
