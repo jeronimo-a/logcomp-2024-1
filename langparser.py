@@ -21,7 +21,8 @@ class Parser:
         Retorna o resultado do método Evaluate do Node raíz da árvore
         '''
 
-        _ = Parser._run(source)
+        root = Parser._run(source)
+        root.Evaluate()
 
         if (Parser.tokenizer.next.type != "EOF"):
             raise Exception("Erro de sintaxe")
@@ -41,8 +42,6 @@ class Parser:
         Parser.tokenizer.select_next()
         Parser.symbol_table = SymbolTable()
         root = Parser.parse_block()
-        try: root.Evaluate()
-        except: print("Erro ao rodar o programa de teste.")
         return root
     
 
