@@ -41,7 +41,8 @@ class Parser:
         Parser.tokenizer.select_next()
         Parser.symbol_table = SymbolTable()
         root = Parser.parse_block()
-        root.Evaluate()
+        try: root.Evaluate()
+        except: print("Erro ao rodar o programa de teste.")
         return root
     
 
@@ -216,13 +217,18 @@ class Parser:
         if Parser.tokenizer.next.type == "VARDEC":
 
             # gera o node VARDEC
+            vardec_node = Vardec(Parser.symbol_table)
             Parser.tokenizer.select_next()
+
+            # espera um IDENT
             Parser.expect("IDENT", "um identificador depois de uma declaração de variável.")
-            vardec_node = Vardec(Parser.tokenizer.next.value, Parser.symbol_table)
 
             # gera o node IDENT que vem em seguida
             ident_node = Ident(Parser.tokenizer.next.value, Parser.symbol_table)
             Parser.tokenizer.select_next()
+
+            # adiciona a variável aos filhos de vardec
+            vardec_node.children.append(ident_node)
 
             # se o próximo for ASSIGN
             if Parser.tokenizer.next.type == "ASSIGN":
