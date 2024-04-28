@@ -20,26 +20,27 @@ class BinOp(Node):
 
     def Evaluate(self):
 
-        value_l, type_l = self.children[0].Evaluate()
-        value_r, type_r = self.children[1].Evaluate()
+        eval_l, type_l = self.children[0].Evaluate()
+        eval_r, type_r = self.children[1].Evaluate()
         mixed = type_l != type_r
 
-        if self.value == ".."   : return str(value_l) + str(value_r)         , "str"
-        if self.value == "or"   : return int(bool(value_l) or bool(value_r)) , "int"
-        if self.value == "and"  : return int(bool(value_l) and bool(value_r)), "int"
+        if self.value == ".."   : return str(eval_l) + str(eval_r)         , "str"
+        if self.value == "or"   : return int(bool(eval_l) or bool(eval_r)) , "int"
+        if self.value == "and"  : return int(bool(eval_l) and bool(eval_r)), "int"
         
         if not mixed:
-            if self.value == "=="   : return int(value_l == value_r), type_l
-            if self.value == "<"    : return int(value_l < value_r) , type_l
-            if self.value == ">"    : return int(value_l > value_r) , type_l
+            if self.value == "=="   : return int(eval_l == eval_r), type_l
+            if self.value == "<"    : return int(eval_l < eval_r) , type_l
+            if self.value == ">"    : return int(eval_l > eval_r) , type_l
 
         if not mixed and type_l == "int":
-            if self.value == "+"    : return value_l + value_r , "int"
-            if self.value == "-"    : return value_l - value_r , "int"
-            if self.value == "*"    : return value_l * value_r , "int"
-            if self.value == "/"    : return value_l // value_r, "int"
+            if self.value == "+"    : return eval_l + eval_r , "int"
+            if self.value == "-"    : return eval_l - eval_r , "int"
+            if self.value == "*"    : return eval_l * eval_r , "int"
+            if self.value == "/"    : return eval_l // eval_r, "int"
 
-        raise Exception("Tipos errados para %s, %s e %s" % (self.value, type_l, type_r))
+        variables = (self.value, self.children[0].value, type_l, self.children[1].value, type_r)
+        raise Exception('Tipos errados para %s, "%s":%s e "%s":%s' % variables)
 
 
 class UnOp(Node):
@@ -48,11 +49,11 @@ class UnOp(Node):
         super().__init__(value)
 
     def Evaluate(self):
-        child_value, child_type = self.children[0].Evaluate()
-        if child_type != "int": raise Exception("UnOp funciona apenas com int, não com %s" % child_type)
-        if self.value == "+"    : return child_value, "int"
-        if self.value == "-"    : return child_value * -1, "int"
-        if self.value == "not"  : return int(not bool(child_value)), "int"
+        child_eval, child_type = self.children[0].Evaluate()
+        if child_type != "int": raise Exception("UnOp funciona apenas com int, não com %s, var: %s" % child_type. self.children[0].value)
+        if self.value == "+"    : return child_eval, "int"
+        if self.value == "-"    : return child_eval * -1, "int"
+        if self.value == "not"  : return int(not bool(child_eval)), "int"
         raise Exception('UnOp Node com valor desconhecido: "%s"' % self.value)
 
 
