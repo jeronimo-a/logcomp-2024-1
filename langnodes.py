@@ -24,17 +24,16 @@ class BinOp(Node):
         value_r, type_r = self.children[1].Evaluate()
         mixed = type_l != type_r
 
-        if mixed:
-            if self.value == ".."   : return str(value_l) + str(value_r)         , "str"
-            if self.value == "or"   : return int(bool(value_l) or bool(value_r)) , "int"
-            if self.value == "and"  : return int(bool(value_l) and bool(value_r)), "int"
+        if self.value == ".."   : return str(value_l) + str(value_r)         , "str"
+        if self.value == "or"   : return int(bool(value_l) or bool(value_r)) , "int"
+        if self.value == "and"  : return int(bool(value_l) and bool(value_r)), "int"
         
         if not mixed:
             if self.value == "=="   : return int(value_l == value_r), type_l
             if self.value == "<"    : return int(value_l < value_r) , type_l
             if self.value == ">"    : return int(value_l > value_r) , type_l
 
-        if not mixed and value_l == "int":
+        if not mixed and type_l == "int":
             if self.value == "+"    : return value_l + value_r , "int"
             if self.value == "-"    : return value_l - value_r , "int"
             if self.value == "*"    : return value_l * value_r , "int"
@@ -163,3 +162,5 @@ class Vardec(Node):
     def Evaluate(self):
         variable = self.children[0].value
         self.table.init(variable)
+        try: self.children[1].Evaluate()
+        except IndexError: pass
