@@ -346,6 +346,12 @@ class Parser:
             latest_node = IntVal(int(Parser.tokenizer.next.value))
             Parser.tokenizer.select_next()
             return latest_node
+        
+        # lida com strings
+        if Parser.tokenizer.next.type == "STR":
+            latest_node = StrVal(Parser.tokenizer.next.value)
+            Parser.tokenizer.select_next()
+            return latest_node
 
         # lida com operadores unários
         if Parser.tokenizer.next.type in ["PLUS", "MINUS", "NOT"]:

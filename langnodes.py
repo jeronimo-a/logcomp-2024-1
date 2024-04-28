@@ -57,6 +57,15 @@ class IntVal(Node):
 
     def Evaluate(self):
         return int(self.value)
+    
+
+class StrVal(Node):
+
+    def __init__(self, value: int):
+        super().__init__(value)
+    
+    def Evaluate(self):
+        return str(self.value)
 
 
 class NoOp(Node):
