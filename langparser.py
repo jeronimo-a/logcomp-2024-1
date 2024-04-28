@@ -321,7 +321,7 @@ class Parser:
             if position == 1:
 
                 # lida com os operadores binários
-                if token.type == "DIV" or token.type == "MULT":
+                if token.type == "DIV" or token.type == "MULT" or token.type == "CAT":
                     Parser.tokenizer.select_next()              # consome o token
                     latest_node = BinOp(token.value)            # cria o novo node do operador binário
                     latest_node.children.append(factor_node)    # adiciona o resultado do parse_factor aos filhos do operador binário
