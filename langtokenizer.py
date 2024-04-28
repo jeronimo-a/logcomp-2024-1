@@ -20,6 +20,12 @@ class Tokenizer:
         "local" : "VARDEC"
     }
 
+    @staticmethod
+    def from_file(source_file: str):
+        with open(source_file) as file:
+            source = file.read()
+        return Tokenizer(source)
+
     def __init__(self, source: str):
         self.source     : str   = source    # o código fonte
         self.position   : int   = 0         # posição atual que está sendo separada
