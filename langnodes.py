@@ -1,8 +1,12 @@
 class Node:
 
+    id = 0
+
     def __init__(self, value):
         self.value    = value
         self.children = list()
+        self.id = Node.id
+        Node.id += 1
 
     def Evaluate(self):
         return self.value, None
