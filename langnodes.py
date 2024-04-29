@@ -63,7 +63,7 @@ class IntVal(Node):
         super().__init__(value)
 
     def Evaluate(self): 
-        return "MOV EAX, %d" % int(self.value)
+        return ["MOV EAX, %d" % int(self.value)]
     
 
 class StrVal(Node):
@@ -161,7 +161,4 @@ class Vardec(Node):
         self.table = table
 
     def Evaluate(self):
-        variable = self.children[0].value
-        self.table.init(variable)
-        try: self.children[1].Evaluate()
-        except IndexError: pass
+        return ["PUSH DWORD 0"]
