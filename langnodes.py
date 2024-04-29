@@ -160,8 +160,15 @@ class While(Node):
         super().__init__("while")
 
     def Evaluate(self):
-        while self.children[0].Evaluate()[0]:
-            self.children[1].Evaluate()     # Block
+        code = list()
+        code += ["LOOP_%d:" % self.id]
+        code += self.children[0].Evaluate()
+        code += ["CMP EAX, False"]
+        code += ["JE EXIT_%d" % self.id]
+        code += self.children[1].Evaluate()
+        code += ["JMP LOOP_%d" % self.id]
+        code += ["EXIT_%d:" % self.id]
+        return code
 
 
 class If(Node):
