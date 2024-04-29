@@ -62,8 +62,8 @@ class IntVal(Node):
     def __init__(self, value: int):
         super().__init__(value)
 
-    def Evaluate(self):
-        return int(self.value), "int"
+    def Evaluate(self): 
+        return "MOV EAX, %d" % int(self.value)
     
 
 class StrVal(Node):
@@ -72,7 +72,7 @@ class StrVal(Node):
         super().__init__(value)
     
     def Evaluate(self):
-        return str(self.value), "str"
+        return "str", str(self.value), 0
 
 
 class NoOp(Node):
