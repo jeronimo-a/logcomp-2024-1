@@ -119,9 +119,11 @@ class Assign(Node):
     
     def Evaluate(self):
         variable = self.children[0].value
-        value, type = self.children[1].Evaluate()
-        try: self.table.set(variable, value, type)
-        except KeyError: raise Exception('Variável "%s" não existe' % self.value)
+        _, _, shift = self.table.get(variable)
+        code = list()
+        code += self.children[1].Evaluate()
+        code += ["MOV [EBP - %d], EAX" % shift]
+        return code
 
 
 class Block(Node):
