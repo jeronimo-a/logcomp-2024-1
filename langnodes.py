@@ -144,8 +144,10 @@ class Block(Node):
         super().__init__("%BLOCK%")
     
     def Evaluate(self):
+        code = list()
         for child in self.children:
-            child.Evaluate()
+            code += child.Evaluate()
+        return code
 
 
 class While(Node):
