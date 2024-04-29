@@ -88,9 +88,9 @@ class Ident(Node):
         self.table = table
 
     def Evaluate(self):
-        try: result = self.table.get(self.value)
+        try: _, _, shift = self.table.get(self.value)
         except KeyError: raise Exception('Variável "%s" não existe' % self.value)
-        return result
+        return ["MOV EAX, [EBP - %d]" % shift]
     
 
 class Print(Node):
