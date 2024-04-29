@@ -114,7 +114,13 @@ class Read(Node):
         super().__init__("read")
 
     def Evaluate(self):
-        return int(input()), "int"
+        code = list()
+        code += ["PUSH scanint"]
+        code += ["PUSH formatin"]
+        code += ["CALL scanf"]
+        code += ["ADD ESP, 8"]
+        code += ["MOV EAX, DWORD [scanint]"]
+        return code
 
 
 class Assign(Node):
