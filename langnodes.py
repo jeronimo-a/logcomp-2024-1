@@ -99,7 +99,13 @@ class Print(Node):
         super().__init__("print")
 
     def Evaluate(self):
-        print(self.children[0].Evaluate()[0])
+        code = list()
+        code += self.children[0].Evaluate()
+        code += ["PUSH EAX"]
+        code += ["PUSH formatout"]
+        code += ["CALL printf"]
+        code += ["ADD ESP, 8"]
+        return code
 
 
 class Read(Node):
