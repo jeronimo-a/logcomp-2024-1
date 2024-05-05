@@ -160,7 +160,7 @@ class While(Node):
         code = list()
         code += ["LOOP_%d:" % self.id]
         code += self.children[0].Evaluate()
-        code += ["CMP EAX, False"]
+        code += ["CMP EAX, 0"]
         code += ["JE EXIT_%d" % self.id]
         code += self.children[1].Evaluate()
         code += ["JMP LOOP_%d" % self.id]
@@ -174,8 +174,17 @@ class If(Node):
         super().__init__("if")
 
     def Evaluate(self):
-        if self.children[0].Evaluate()[0]: self.children[1].Evaluate()    # Block
-        else: self.children[2].Evaluate()                   # Block
+        code = list()
+        code += self.children[0].Evaluate()
+        code += ["CMP EAX, 0"]
+        code += ["JE ELSE_%d" % self.id]
+        code += self.children[1].Evaluate()
+        code += ["JMP EXIT_%d" % self.id]
+        code += ["ELSE_%d:" % self.id]
+        try: code += self.children[2].Evaluate()
+        except IndexError: pass
+        code += ["EXIT_%d:" % self.id]
+        return code
 
 
 class Vardec(Node):
