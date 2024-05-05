@@ -74,6 +74,8 @@ class Parser:
         # gambiarra para resolver newline que escapa aqui pra dentro
         while Parser.tokenizer.next.type == "NEWLINE":
             Parser.tokenizer.select_next()
+        if Parser.tokenizer.next.type == "EOF":
+            return NoOp()
 
         # se o primeiro token da linha for um IDENT
         if Parser.tokenizer.next.type == "IDENT":
