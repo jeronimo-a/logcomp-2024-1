@@ -71,6 +71,10 @@ class Parser:
         Vide diagrama_sintatico.png
         '''
 
+        # gambiarra para resolver newline que escapa aqui pra dentro
+        while Parser.tokenizer.next.type == "NEWLINE":
+            Parser.tokenizer.select_next()
+
         # se o primeiro token da linha for um IDENT
         if Parser.tokenizer.next.type == "IDENT":
 
@@ -251,7 +255,7 @@ class Parser:
             return vardec_node
         
         # gera erro caso chegar aqui
-        raise Exception(Parser.tokenizer.source)
+        raise Exception("Erro de sintaxe %s" % Parser.tokenizer.next.type)
 
 
     @staticmethod
