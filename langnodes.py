@@ -188,4 +188,5 @@ class Vardec(Node):
         self.table = table
 
     def Evaluate(self):
+        self.table.init(self.children[0].value)
         return ["PUSH DWORD 0"]
