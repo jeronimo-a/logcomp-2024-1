@@ -9,7 +9,7 @@ class Node:
         Node.id += 1
 
     def Evaluate(self):
-        return self.value, None
+        return list()
     
     def View(self, counter: int=0, margin: str="  "):
         print(counter * margin, self.value, sep="")
@@ -186,4 +186,7 @@ class Vardec(Node):
 
     def Evaluate(self):
         self.table.init(self.children[0].value)
-        return ["PUSH DWORD 0"]
+        code = ["PUSH DWORD 0"]
+        try: code += self.children[1].Evaluate()
+        except IndexError: pass
+        return code

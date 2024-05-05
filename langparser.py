@@ -18,14 +18,16 @@ class Parser:
         Posiciona o Tokenizer no primeiro token (feito no inicializador de Tokenizer)
         Verifica se a cadeia foi consumida por completo
         Constrói a árvore AST
-        Retorna o resultado do método Evaluate do Node raíz da árvore
+        Retorna a lista com os comandos assembly
         '''
 
         root = Parser._run(source)
-        root.Evaluate()
+        code = root.Evaluate()
 
         if (Parser.tokenizer.next.type != "EOF"):
             raise Exception("Erro de sintaxe")
+        
+        return code
     
 
     @staticmethod
@@ -509,6 +511,7 @@ class Parser:
         error_message = 'Erro de sintaxe, espera-se "%s"' % token_type
         if extra_context is not None:
             error_message += " " + extra_context
+        error_message += '\nE não "%s"' % Parser.tokenizer.next.type
 
         if Parser.tokenizer.next.type != token_type:
             raise Exception(error_message)
