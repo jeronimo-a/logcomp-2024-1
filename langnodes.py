@@ -32,7 +32,7 @@ class BinOp(Node):
 
         if self.value == "or" : code += ["OR EAX, EBX"]
         if self.value == "and": code += ["AND EAX, EBX"]
-        if self.value == "==" : code += ["CMP EAX, EBX"]
+        if self.value == "==" : code += ["CMP EAX, EBX", "SETE AL", "MOVZX EAX, AL"]
         if self.value == "<"  : code += ["CMP EAX, EBX"]
         if self.value == ">"  : code += ["CMP EAX, EBX"]
         if self.value == "+"  : code += ["ADD EAX, EBX"]
