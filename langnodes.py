@@ -48,12 +48,14 @@ class UnOp(Node):
         super().__init__(value)
 
     def Evaluate(self):
-        child_eval, child_type = self.children[0].Evaluate()
-        if child_type != "int": raise Exception("UnOp funciona apenas com int, não com %s, var: %s" % child_type. self.children[0].value)
-        if self.value == "+"    : return child_eval, "int"
-        if self.value == "-"    : return child_eval * -1, "int"
-        if self.value == "not"  : return int(not bool(child_eval)), "int"
-        raise Exception('UnOp Node com valor desconhecido: "%s"' % self.value)
+
+        code = list()
+        code += self.children[0].Evaluate()
+
+        if self.value == "-"  : code += ["NEG EAX"]
+        if self.value == "not": code += ["NOT EAX"]
+
+        return code
 
 
 class IntVal(Node):
