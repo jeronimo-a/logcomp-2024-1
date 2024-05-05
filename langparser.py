@@ -251,7 +251,7 @@ class Parser:
             return vardec_node
         
         # gera erro caso chegar aqui
-        raise Exception("Erro de sintaxe %s" % Parser.tokenizer.next.type)
+        raise Exception(Parser.tokenizer.source)
 
 
     @staticmethod
