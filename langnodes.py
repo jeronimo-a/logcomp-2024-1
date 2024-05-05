@@ -53,7 +53,7 @@ class UnOp(Node):
         code += self.children[0].Evaluate()
 
         if self.value == "-"  : code += ["NEG EAX"]
-        if self.value == "not": code += ["NOT EAX"]
+        if self.value == "not": code += ["CMP EAX, 0", "SETNE AL", "MOVZX EAX, AL"]
 
         return code
 
