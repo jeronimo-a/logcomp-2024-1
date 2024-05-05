@@ -36,7 +36,7 @@ class BinOp(Node):
         if self.value == "<"  : code += ["CMP EAX, EBX"]
         if self.value == ">"  : code += ["CMP EAX, EBX"]
         if self.value == "+"  : code += ["ADD EAX, EBX"]
-        if self.value == "-"  : code += ["SUB EAX, EBX"]
+        if self.value == "-"  : code += ["SUB EBX, EAX", "MOV EAX, EBX"]
         if self.value == "*"  : code += ["IMUL EAX, EBX"]
         if self.value == "/"  : code += ["MOV EDX, 0", "IDIV EBX"]
 
