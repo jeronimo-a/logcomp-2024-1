@@ -24,28 +24,23 @@ class BinOp(Node):
 
     def Evaluate(self):
 
-        eval_l, type_l = self.children[0].Evaluate()
-        eval_r, type_r = self.children[1].Evaluate()
-        mixed = type_l != type_r
+        code = list()
+        code += self.children[0].Evaluate()
+        code += ["PUSH EAX"]
+        code += self.children[1].Evaluate()
+        code += ["POP EBX"]
 
-        if self.value == ".."   : return str(eval_l) + str(eval_r)         , "str"
-        if self.value == "or"   : return int(bool(eval_l) or bool(eval_r)) , "int"
-        if self.value == "and"  : return int(bool(eval_l) and bool(eval_r)), "int"
-        
-        if not mixed:
-            if self.value == "=="   : return int(eval_l == eval_r), type_l
-            if self.value == "<"    : return int(eval_l < eval_r) , type_l
-            if self.value == ">"    : return int(eval_l > eval_r) , type_l
+        if self.value == "or" : code += ["OR EAX, EBX"]
+        if self.value == "and": code += ["AND EAX, EBX"]
+        if self.value == "==" : code += ["CMP EAX, EBX"]
+        if self.value == "<"  : code += ["CMP EAX, EBX"]
+        if self.value == ">"  : code += ["CMP EAX, EBX"]
+        if self.value == "+"  : code += ["ADD EAX, EBX"]
+        if self.value == "-"  : code += ["SUB EAX, EBX"]
+        if self.value == "*"  : code += ["IMUL EAX, EBX"]
+        if self.value == "/"  : code += ["MOV EDX, 0", "IDIV EBX"]
 
-        if not mixed and type_l == "int":
-            if self.value == "+"    : return eval_l + eval_r , "int"
-            if self.value == "-"    : return eval_l - eval_r , "int"
-            if self.value == "*"    : return eval_l * eval_r , "int"
-            if self.value == "/"    : return eval_l // eval_r, "int"
-
-        variables = (self.value, self.children[0].value, type_l, self.children[1].value, type_r)
-        raise Exception('Tipos errados para %s, "%s":%s e "%s":%s' % variables)
-
+        return code
 
 class UnOp(Node):
 
