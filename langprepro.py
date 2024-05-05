@@ -3,6 +3,8 @@ class PrePro:
     @staticmethod
     def filter(text: str):
 
+        if len(text) == 0: return text
+
         # loop de remoção de comentários
         while True:
 
