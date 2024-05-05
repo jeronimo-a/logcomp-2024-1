@@ -21,6 +21,8 @@ class Parser:
         Retorna a lista com os comandos assembly
         '''
 
+        raise Exception(source)
+
         root = Parser._run(source)
         code = root.Evaluate()
 
