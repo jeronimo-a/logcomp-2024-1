@@ -13,9 +13,7 @@ def main():
     with open(footer_file) as file:
         footer = file.read()
     with open(source, "r") as file:
-        source = file.read()
-        try: assembly_code = Parser.run(source)
-        except: raise Exception(source)
+        assembly_code = Parser.run(file.read())
     
     assembly_code = "\n" + "\n".join(assembly_code) + "\n"
     
