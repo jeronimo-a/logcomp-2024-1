@@ -1,3 +1,5 @@
+from langsymboltable import SymbolTable
+
 class Node:
 
     def __init__(self, value):
@@ -174,66 +176,31 @@ class Vardec(Node):
 class FuncDec(Node):
     '''
     Possui n filhos no total, divididos em 3 pedaços
-    Filho 0: Block Node de Assign Nodes (parâmetros)
-    Filho 1: Block Node com o corpo da função
+    Filho i: i-ésimo Vardec Node (i-ésimo parâmetro)
+    Filho n: Block Node com o corpo da função
     '''
 
     def __init__(self, name, table):
         super().__init__(name)
-        self.table = table
+        self.function_table = table
     
     def Evaluate(self):
-        self.table.init(self.value)
-        self.table.set(self.value, self)
+        self.function_table.init(self.value)
+        self.function_table.set(self.value, self)
 
 
 class FuncCall(Node):
     '''
     Possui n filhos
-    Filho n: argumento para o n-ésimo parâmetro da função
+    Filho i: argumento para o i-ésimo parâmetro da função
     '''
 
-    def __init__(self, name, function_table, local_table):
+    def __init__(self, name, function_table):
         super().__init__(name)
-        self.value = name
-        self.table = function_table
-        self.local_table = local_table
+        pass
 
     def Evaluate(self):
-
-        # coleta os valores dos argumentos
-        arguments = list()
-        for argument in self.children:
-            arguments.append(argument.Evaluate())
-
-        # extrai a referência do Node FuncDec da função
-        try: funcdec = self.table.get(self.value)
-        except KeyError: raise Exception('Função "%s" não existe' % self.value)
-        
-        # faz a declaração dos argumentos na SymbolTable do escopo interno da função
-        if len(arguments) != len(funcdec.children[0].children):
-            raise Exception("Número errado de argumentos")
-        for i in range(len(funcdec.children[0].children)):
-            vardec = funcdec.children[0].children[i]
-            vardec.table = self.local_table
-            ident = vardec.children[0]
-            ident.table = self.local_table
-            argument = arguments[i]
-            vardec.Evaluate()
-            vardec.table.set(ident.value, argument[0], argument[1])
-
-        # faz o Evaluate do corpo da função
-        FuncCall.switch_tables(funcdec.children[1].children, self.local_table)
-        return funcdec.children[1].Evaluate()
-
-    @staticmethod
-    def switch_tables(children: list, local_table):
-
-        if len(children) == 0: return
-
-        for child in children:
-            child.table = local_table
-            FuncCall.switch_tables(child.children, local_table)
+        pass
 
 
 class Return(Node):
