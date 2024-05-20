@@ -161,7 +161,59 @@ class Vardec(Node):
         self.table = table
 
     def Evaluate(self):
-        variable = self.children[0].value
-        self.table.init(variable)
+        identifier = self.children[0].value
+        self.table.init(identifier)
         try: self.children[1].Evaluate()
         except IndexError: pass
+
+
+class FuncDec(Node):
+    '''
+    Possui n filhos no total, divididos em 3 pedaços
+    Filho 0: identifier (nome da função)
+    Filho 1: lista de Assign Nodes (parâmetros)
+    Filho 2: Block Node com o corpo da função
+    '''
+
+    def __init__(self, table):
+        super().__init__("function")
+        self.table = table
+    
+    def Evaluate(self):
+        identifier = self.children[0].value
+        self.table.init(identifier)
+        self.table.set(identifier, self)
+
+
+class FuncCall(Node):
+    '''
+    Possui n filhos
+    Filho n: argumento para o n-ésimo parâmetro da função
+    '''
+
+    def __init__(self, function_table, identifier):
+        super().__init__(identifier)
+        self.value = identifier
+        self.table = function_table
+
+    def Evaluate(self):
+
+        # coleta os valores dos argumentos
+        arguments = list()
+        for argument in self.children:
+            arguments.append(argument.Evaluate())
+
+        # extrai a referência do Node FuncDec da função
+        try: funcdec = self.table.get(self.value)
+        except KeyError: raise Exception('Função "%s" não existe' % self.value)
+        
+        # faz a declaração dos argumentos na SymbolTable do escopo interno da função
+        for i in range(range(funcdec.children[1])):
+            vardec = funcdec.children[1][i]
+            argument = arguments[i]
+            identifier = vardec.children[0].value
+            vardec.Evaluate()
+            vardec.table.set(identifier, argument)
+
+        # faz o Evaluate do corpo da função
+        funcdec.children[2].Evaluate()
