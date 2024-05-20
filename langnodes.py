@@ -216,7 +216,8 @@ class FuncCall(Node):
             vardec.table = self.local_table
             ident = vardec.children[0]
             ident.table = self.local_table
-            argument = arguments[i]
+            try: argument = arguments[i]
+            except IndexError: raise Exception("Número errado de argumentos.")
             vardec.Evaluate()
             vardec.table.set(ident.value, argument[0], argument[1])
 
