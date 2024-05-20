@@ -103,16 +103,10 @@ class Parser:
             # verifica se é OPENPAR
             if Parser.tokenizer.next.type == "OPENPAR":
 
-                # cria o Node FuncCall a partir do token anterior e consome o OPENPAR
-                funccall_node = FuncCall(Parser.function_table, ident_token.value)
+                # cria o Node FuncCall a partir do token anterior, faz o parsing dos argumentos e consome o OPENPAR
+                funccall_node = FuncCall(ident_token.value, Parser.function_table)
+                Parser.parse_function_args(funccall_node)
                 Parser.tokenizer.select_next()
-
-                # loop de coleta dos argumentos
-                while Parser.tokenizer.next.type == "COMMA":
-                    
-                    # chama parse_boolean_expression para extrair o argumento e adiciona aos filhos de FuncCall
-                    b_exp_root_node = Parser.parse_boolean_expression()
-                    funccall_node.children.append(b_exp_root_node)
 
                 # verifica se tem fechamento de parênteses
                 Parser.expect("CLOSEPAR", "para uma chamada de função")
@@ -124,8 +118,6 @@ class Parser:
 
                 return funccall_node
 
-
-        
         # se o primeiro token da linha for um PRINT
         if Parser.tokenizer.next.type == "PRINT":
 
@@ -178,10 +170,8 @@ class Parser:
                 statement_node = Parser.parse_statement()
                 block_node.children.append(statement_node)
 
-            # linka o node block ao node while
+            # linka o node block ao node while e consome o token END
             while_node.children.append(block_node)
-
-            # consome o token END
             Parser.tokenizer.select_next()
 
             # verifica se tem NEWLINE
@@ -406,11 +396,32 @@ class Parser:
             Parser.tokenizer.select_next()
             return latest_node
 
-        # lida com variáveis
+        # lida com variáveis e chamadas de função
         if Parser.tokenizer.next.type == "IDENT":
-            latest_node = Ident(Parser.tokenizer.next.value, Parser.symbol_table)
+
+            # lembra do token IDENT
+            ident_token = Parser.tokenizer.next
             Parser.tokenizer.select_next()
-            return latest_node
+
+            # se for OPENPAR, é chamada de função
+            if Parser.tokenizer.next.type == "OPENPAR":
+
+                # cria o Node FuncCall da chamada de função, faz o parsing dos argumentos e consome o OPENPAR
+                funccall_node = FuncCall(ident_token.value, Parser.function_table)
+                Parser.parse_function_args(funccall_node)
+                Parser.tokenizer.select_next()
+
+                # verifica se tem fechamento de parênteses
+                Parser.expect("CLOSEPAR", "em uma chamada de função")
+                Parser.tokenizer.select_next()
+
+                return funccall_node
+
+            # não for OPENPAR, é "chamada" de variável
+            else:
+                ident_node = Ident(ident_token.value, Parser.symbol_table)
+                Parser.tokenizer.select_next()
+                return ident_node
 
         # lida com read
         if Parser.tokenizer.next.type == "READ":
@@ -532,6 +543,18 @@ class Parser:
         if relational_node is None: root_node = exp_root_node
         else: root_node = relational_node
         return root_node
+    
+
+    @staticmethod
+    def parse_function_args(funccall_node: FuncCall):
+        ''' Faz o parsing dos argumentos de função em uma chamada '''
+
+        # loop de coleta dos argumentos
+        while Parser.tokenizer.next.type == "COMMA":
+            
+            # chama parse_boolean_expression para extrair o argumento e adiciona aos filhos de FuncCall
+            b_exp_root_node = Parser.parse_boolean_expression()
+            funccall_node.children.append(b_exp_root_node)
 
 
     @staticmethod
