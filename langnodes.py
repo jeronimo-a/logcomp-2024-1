@@ -219,7 +219,17 @@ class FuncCall(Node):
             vardec.table.set(ident.value, argument[0], argument[1])
 
         # faz o Evaluate do corpo da função
+        FuncCall.switch_tables(self.children[1].children, self.local_table)
         return funcdec.children[1].Evaluate()
+
+    @staticmethod
+    def switch_tables(children: list, local_table):
+
+        if len(children) == 0: return
+
+        for child in children:
+            child.table = local_table
+            FuncCall.switch_tables(child.children, local_table)
 
 
 class Return(Node):

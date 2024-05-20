@@ -105,7 +105,7 @@ class Parser:
             if Parser.tokenizer.next.type == "OPENPAR":
 
                 # cria o Node FuncCall a partir do token anterior, faz o parsing dos argumentos e consome o OPENPAR
-                funccall_node = FuncCall(ident_token.value, Parser.function_table, SymbolTable())
+                funccall_node = FuncCall(ident_token.value, Parser.function_table, SymbolTable(ident_token.value))
                 Parser.tokenizer.select_next()
                 Parser.parse_function_args(funccall_node)
 
@@ -490,7 +490,7 @@ class Parser:
             if Parser.tokenizer.next.type == "OPENPAR":
 
                 # cria o Node FuncCall da chamada de função, faz o parsing dos argumentos e consome o OPENPAR
-                funccall_node = FuncCall(ident_token.value, Parser.function_table, SymbolTable())
+                funccall_node = FuncCall(ident_token.value, Parser.function_table, SymbolTable(ident_token.value))
                 Parser.tokenizer.select_next()
                 Parser.parse_function_args(funccall_node)
 
