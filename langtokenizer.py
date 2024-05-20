@@ -6,18 +6,20 @@ class Tokenizer:
     letters       += letters.upper()
     allowed_chars  = letters + "0123456789_"
     reserved_words = {
-        "print" : "PRINT",
-        "and"   : "AND",
-        "or"    : "OR",
-        "if"    : "IF",
-        "while" : "WHILE",
-        "end"   : "END",
-        "do"    : "DO",
-        "then"  : "THEN",
-        "else"  : "ELSE",
-        "read"  : "READ",
-        "not"   : "NOT",
-        "local" : "VARDEC"
+        "print"     : "PRINT",
+        "and"       : "AND",
+        "or"        : "OR",
+        "if"        : "IF",
+        "while"     : "WHILE",
+        "end"       : "END",
+        "do"        : "DO",
+        "then"      : "THEN",
+        "else"      : "ELSE",
+        "read"      : "READ",
+        "not"       : "NOT",
+        "local"     : "VARDEC",
+        "function"  : "FUNCDEC",
+        "return"    : "RETURN"
     }
 
     @staticmethod
@@ -191,6 +193,12 @@ class Tokenizer:
             # cria o token
             self.position += 2
             self.next = Token("CAT", "..")
+            return
+
+        # se for vírgula, cria um novo token COMMA
+        if self.source[self.position] == ",":
+            self.next = Token("COMMA", ",")
+            self.position += 1
             return
             
 
