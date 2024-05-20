@@ -6,8 +6,9 @@ from langnodes import *
 
 class Parser:
 
-    tokenizer    : Tokenizer   = None   # instância da classe Tokenizer que irá ler o código fonte e alimentar o Parser
-    symbol_table : SymbolTable = None   # instância da classe SymbolTable que irá armazenar o valor das variáveis
+    tokenizer       : Tokenizer   = None    # instância da classe Tokenizer que irá ler o código fonte e alimentar o Parser
+    symbol_table    : SymbolTable = None    # instância da classe SymbolTable que irá armazenar o valor das variáveis
+    function_table  : SymbolTable = None    # instância da classe SymbolTable que irá armazenar o Node FuncDec das funções
 
     @staticmethod
     def run(source: str):
@@ -72,27 +73,58 @@ class Parser:
         # se o primeiro token da linha for um IDENT
         if Parser.tokenizer.next.type == "IDENT":
 
-            # gera o node IDENT
-            ident_node = Ident(Parser.tokenizer.next.value, Parser.symbol_table)
+            # lembra do token IDENT
+            ident_token = Parser.tokenizer.next
             Parser.tokenizer.select_next()
 
-            # gera o node ASSIGN
-            Parser.expect("ASSIGN", "depois de uma variável no começo da linha")
-            assign_node = Assign(Parser.symbol_table)
-            Parser.tokenizer.select_next()
+            # verifica se é ASSIGN
+            if Parser.tokenizer.next.type == "ASSIGN":
 
-            # chama o parse_boolean_expression
-            b_exp_root_node = Parser.parse_boolean_expression()
+                # cria o Node Ident a partir do valor do token passado
+                ident_node = Ident(ident_token.value, Parser.symbol_table)
 
-            # linka o IDENT e o node raiz de parse_boolean_expression ao ASSIGN
-            assign_node.children.append(ident_node)
-            assign_node.children.append(b_exp_root_node)
+                # cria o Node Assign
+                assign_node = Assign(Parser.symbol_table)
+                Parser.tokenizer.select_next()
 
-            # verifica sem tem NEWLINE
-            Parser.expect("NEWLINE", "depois de uma atribuição")
-            Parser.tokenizer.select_next()
+                # chama o parse_boolean_expression
+                b_exp_root_node = Parser.parse_boolean_expression()
 
-            return assign_node
+                # linka o IDENT e o node raiz de parse_boolean_expression ao ASSIGN
+                assign_node.children.append(ident_node)
+                assign_node.children.append(b_exp_root_node)
+
+                # verifica sem tem NEWLINE
+                Parser.expect("NEWLINE", "depois de uma atribuição")
+                Parser.tokenizer.select_next()
+
+                return assign_node
+
+            # verifica se é OPENPAR
+            if Parser.tokenizer.next.type == "OPENPAR":
+
+                # cria o Node FuncCall a partir do token anterior e consome o OPENPAR
+                funccall_node = FuncCall(Parser.function_table, ident_token.value)
+                Parser.tokenizer.select_next()
+
+                # loop de coleta dos argumentos
+                while Parser.tokenizer.next.type == "COMMA":
+                    
+                    # chama parse_boolean_expression para extrair o argumento e adiciona aos filhos de FuncCall
+                    b_exp_root_node = Parser.parse_boolean_expression()
+                    funccall_node.children.append(b_exp_root_node)
+
+                # verifica se tem fechamento de parênteses
+                Parser.expect("CLOSEPAR", "para uma chamada de função")
+                Parser.tokenizer.select_next()
+
+                # verifica se tem quebra de linha
+                Parser.expect("NEWLINE", "depois de uma chamada de função")
+                Parser.tokenizer.select_next()
+
+                return funccall_node
+
+
         
         # se o primeiro token da linha for um PRINT
         if Parser.tokenizer.next.type == "PRINT":
@@ -509,6 +541,7 @@ class Parser:
         error_message = 'Erro de sintaxe, espera-se "%s"' % token_type
         if extra_context is not None:
             error_message += " " + extra_context
+        error_message += '\nNão "%s".' % Parser.tokenizer.next.type
 
         if Parser.tokenizer.next.type != token_type:
             raise Exception(error_message)
