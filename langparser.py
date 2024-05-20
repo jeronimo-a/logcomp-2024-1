@@ -180,7 +180,23 @@ class Parser:
                 Parser.tokenizer.select_next()
 
                 return FuncDec
+            
+        # se o primeiro token da linha for um RETURN
+        if Parser.tokenizer.next.type == "RETURN":
 
+            # consome o token RETURN e cria o Node Return
+            Parser.tokenizer.select_next()
+            return_node = Return()
+
+            # chama parse_boolean_expression
+            b_exp_root_node = Parser.parse_boolean_expression()
+            return_node.children.append(b_exp_root_node)
+
+            # espera-se NEWLINE
+            Parser.expect("NEWLINE", "após um return")
+            Parser.tokenizer.select_next()
+
+            return return_node
 
         # se o primeiro token da linha for um PRINT
         if Parser.tokenizer.next.type == "PRINT":

@@ -131,7 +131,9 @@ class Block(Node):
     
     def Evaluate(self):
         for child in self.children:
-            child.Evaluate()
+            child = child.Evaluate()
+            if child is not None:
+                return child
 
 
 class While(Node):
@@ -214,4 +216,13 @@ class FuncCall(Node):
             vardec.table.set(identifier, argument)
 
         # faz o Evaluate do corpo da função
-        funcdec.children[2].Evaluate()
+        return funcdec.children[2].Evaluate()
+
+
+class Return(Node):
+
+    def __init__(self):
+        super().__init__("return")
+    
+    def Evaluate(self):
+        return self.children[0].Evaluate()
