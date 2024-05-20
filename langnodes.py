@@ -131,9 +131,9 @@ class Block(Node):
     
     def Evaluate(self):
         for child in self.children:
-            child = child.Evaluate()
-            if child is not None:
-                return child
+            value = child.Evaluate()
+            if value is not None:
+                return value
 
 
 class While(Node):
@@ -172,7 +172,7 @@ class Vardec(Node):
 class FuncDec(Node):
     '''
     Possui n filhos no total, divididos em 3 pedaços
-    Filho 0: lista de Assign Nodes (parâmetros)
+    Filho 0: Block Node de Assign Nodes (parâmetros)
     Filho 1: Block Node com o corpo da função
     '''
 
@@ -181,8 +181,8 @@ class FuncDec(Node):
         self.table = table
     
     def Evaluate(self):
-        self.table.init(self.name)
-        self.table.set(self.name, self)
+        self.table.init(self.value)
+        self.table.set(self.value, self)
 
 
 class FuncCall(Node):
@@ -191,10 +191,11 @@ class FuncCall(Node):
     Filho n: argumento para o n-ésimo parâmetro da função
     '''
 
-    def __init__(self, function_table, name):
+    def __init__(self, name, function_table, local_table):
         super().__init__(name)
         self.value = name
         self.table = function_table
+        self.local_table = local_table
 
     def Evaluate(self):
 
@@ -208,15 +209,17 @@ class FuncCall(Node):
         except KeyError: raise Exception('Função "%s" não existe' % self.value)
         
         # faz a declaração dos argumentos na SymbolTable do escopo interno da função
-        for i in range(range(funcdec.children[1])):
-            vardec = funcdec.children[1][i]
+        for i in range(len(funcdec.children[0].children)):
+            vardec = funcdec.children[0].children[i]
+            vardec.table = self.local_table
+            ident = vardec.children[0]
+            ident.table = self.local_table
             argument = arguments[i]
-            identifier = vardec.children[0].value
             vardec.Evaluate()
-            vardec.table.set(identifier, argument)
+            vardec.table.set(ident.value, argument[0], argument[1])
 
         # faz o Evaluate do corpo da função
-        return funcdec.children[2].Evaluate()
+        return funcdec.children[1].Evaluate()
 
 
 class Return(Node):

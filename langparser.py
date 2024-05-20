@@ -1,4 +1,4 @@
-from langsymboltable import SymbolTable
+from langsymboltable import SymbolTable, FuncTable
 from langtokenizer import Tokenizer
 from langprepro import PrePro
 from langnodes import *
@@ -8,7 +8,7 @@ class Parser:
 
     tokenizer       : Tokenizer   = None    # instância da classe Tokenizer que irá ler o código fonte e alimentar o Parser
     symbol_table    : SymbolTable = None    # instância da classe SymbolTable que irá armazenar o valor das variáveis
-    function_table  : SymbolTable = None    # instância da classe SymbolTable que irá armazenar o Node FuncDec das funções
+    function_table  : FuncTable   = None    # instância da classe SymbolTable que irá armazenar o Node FuncDec das funções
 
     @staticmethod
     def run(source: str):
@@ -42,6 +42,7 @@ class Parser:
         Parser.tokenizer = Tokenizer(source)
         Parser.tokenizer.select_next()
         Parser.symbol_table = SymbolTable()
+        Parser.function_table = FuncTable()
         root = Parser.parse_block()
         return root
     
@@ -104,9 +105,9 @@ class Parser:
             if Parser.tokenizer.next.type == "OPENPAR":
 
                 # cria o Node FuncCall a partir do token anterior, faz o parsing dos argumentos e consome o OPENPAR
-                funccall_node = FuncCall(ident_token.value, Parser.function_table)
-                Parser.parse_function_args(funccall_node)
+                funccall_node = FuncCall(ident_token.value, Parser.function_table, SymbolTable())
                 Parser.tokenizer.select_next()
+                Parser.parse_function_args(funccall_node)
 
                 # verifica se tem fechamento de parênteses
                 Parser.expect("CLOSEPAR", "para uma chamada de função")
@@ -127,7 +128,7 @@ class Parser:
 
             # cria o Node FuncDec e consome o token IDENT
             funcdec_node = FuncDec(Parser.tokenizer.next.value, Parser.function_table)
-            funcdec_node.children.append(list())
+            funcdec_node.children.append(Block())
             Parser.tokenizer.select_next()
 
             # espera-se um OPENPAR
@@ -144,7 +145,7 @@ class Parser:
 
                 # cria as relações entre os Nodes
                 vardec_node.children.append(ident_node)
-                funcdec_node.children[0].append(vardec_node)
+                funcdec_node.children[0].children.append(vardec_node)
 
                 # loop de coleta
                 while Parser.tokenizer.next.type == "COMMA":
@@ -160,7 +161,7 @@ class Parser:
 
                     # cria as relações entre os Nodes
                     vardec_node.children.append(ident_node)
-                    funcdec_node.children[0].append(vardec_node)
+                    funcdec_node.children[0].children.append(vardec_node)
 
                 # espera-se um CLOSEPAR seguido de NEWLINE
                 Parser.expect("CLOSEPAR", "ao declarar uma função")
@@ -170,16 +171,16 @@ class Parser:
 
                 # loop de coleta dos statements
                 statement_block = Block()
-                FuncDec.children.append(statement_block)
+                funcdec_node.children.append(statement_block)
                 while Parser.tokenizer.next.type != "END":
-                    statement_block.append(Parser.parse_statement())
+                    statement_block.children.append(Parser.parse_statement())
                 
                 # consome o END e espera um NEWLINE
                 Parser.tokenizer.select_next()
                 Parser.expect("NEWLINE", "ao final de uma declaração de função")
                 Parser.tokenizer.select_next()
 
-                return FuncDec
+                return funcdec_node
             
         # se o primeiro token da linha for um RETURN
         if Parser.tokenizer.next.type == "RETURN":
@@ -447,6 +448,8 @@ class Parser:
         Implementação do factor do diagrama sintático
         Vide diagrama_sintatico.png
         '''
+
+        print("FACTOR:", Parser.tokenizer.next.type, Parser.tokenizer.next.value)
                 
         # lida com números
         if Parser.tokenizer.next.type == "NUM":
@@ -487,9 +490,9 @@ class Parser:
             if Parser.tokenizer.next.type == "OPENPAR":
 
                 # cria o Node FuncCall da chamada de função, faz o parsing dos argumentos e consome o OPENPAR
-                funccall_node = FuncCall(ident_token.value, Parser.function_table)
-                Parser.parse_function_args(funccall_node)
+                funccall_node = FuncCall(ident_token.value, Parser.function_table, SymbolTable())
                 Parser.tokenizer.select_next()
+                Parser.parse_function_args(funccall_node)
 
                 # verifica se tem fechamento de parênteses
                 Parser.expect("CLOSEPAR", "em uma chamada de função")
@@ -499,8 +502,9 @@ class Parser:
 
             # não for OPENPAR, é "chamada" de variável
             else:
+                print("####", Parser.tokenizer.next.type, Parser.tokenizer.next.value)
                 ident_node = Ident(ident_token.value, Parser.symbol_table)
-                Parser.tokenizer.select_next()
+                print("retornou", ident_node.value)
                 return ident_node
 
         # lida com read
@@ -514,6 +518,7 @@ class Parser:
             return latest_node
             
         # gera erro caso chegar aqui
+        print(Parser.tokenizer.next.type, Parser.tokenizer.next.value)
         raise Exception("Erro de sintaxe")
     
 
@@ -629,8 +634,15 @@ class Parser:
     def parse_function_args(funccall_node: FuncCall):
         ''' Faz o parsing dos argumentos de função em uma chamada '''
 
+        # chama parse_boolean_expression para extrair o argumento e adiciona aos filhos de FuncCall
+        b_exp_root_node = Parser.parse_boolean_expression()
+        funccall_node.children.append(b_exp_root_node)
+
         # loop de coleta dos argumentos
         while Parser.tokenizer.next.type == "COMMA":
+
+            # consome o token COMMA
+            Parser.tokenizer.select_next()
             
             # chama parse_boolean_expression para extrair o argumento e adiciona aos filhos de FuncCall
             b_exp_root_node = Parser.parse_boolean_expression()
@@ -644,7 +656,7 @@ class Parser:
         error_message = 'Erro de sintaxe, espera-se "%s"' % token_type
         if extra_context is not None:
             error_message += " " + extra_context
-        error_message += '\nNão "%s".' % Parser.tokenizer.next.type
+        error_message += '\nNão "%s" de valor "%s".' % (Parser.tokenizer.next.type, Parser.tokenizer.next.value)
 
         if Parser.tokenizer.next.type != token_type:
             raise Exception(error_message)
