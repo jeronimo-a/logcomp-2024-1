@@ -117,6 +117,70 @@ class Parser:
                 Parser.tokenizer.select_next()
 
                 return funccall_node
+            
+        # se o primeiro token da linha for um FUNCDEC
+        if Parser.tokenizer.next.type == "FUNCDEC":
+
+            # consome o token FUNCDEC e espera um token IDENT
+            Parser.tokenizer.select_next()
+            Parser.expect("IDENT", "ao declarar uma nova função")
+
+            # cria o Node FuncDec e consome o token IDENT
+            funcdec_node = FuncDec(Parser.tokenizer.next.value, Parser.function_table)
+            funcdec_node.children.append(list())
+            Parser.tokenizer.select_next()
+
+            # espera-se um OPENPAR
+            Parser.expect("OPENPAR", "para declarar uma nova função")
+            Parser.tokenizer.select_next()
+
+            # loop de coleta dos parâmetros
+            if Parser.tokenizer.next.type == "IDENT":
+
+                # cria os Nodes Vardec e Ident dos parâmetros ainda sem symbol table
+                vardec_node = Vardec(None)
+                ident_node = Ident(Parser.tokenizer.next.value, None)
+                Parser.tokenizer.select_next()
+
+                # cria as relações entre os Nodes
+                vardec_node.children.append(ident_node)
+                funcdec_node.children[0].append(vardec_node)
+
+                # loop de coleta
+                while Parser.tokenizer.next.type == "COMMA":
+                    
+                    # consome o token COMMA e espera um identifier
+                    Parser.tokenizer.select_next()
+                    Parser.expect("IDENT", "na declaração dos parâmetros de uma função")
+
+                    # cria os Nodes Vardec e Ident dos parâmetros ainda sem symbol table
+                    vardec_node = Vardec(None)
+                    ident_node = Ident(Parser.tokenizer.next.value, None)
+                    Parser.tokenizer.select_next()
+
+                    # cria as relações entre os Nodes
+                    vardec_node.children.append(ident_node)
+                    funcdec_node.children[0].append(vardec_node)
+
+                # espera-se um CLOSEPAR seguido de NEWLINE
+                Parser.expect("CLOSEPAR", "ao declarar uma função")
+                Parser.tokenizer.select_next()
+                Parser.expect("NEWLINE", "ao declarar uma função")
+                Parser.tokenizer.select_next()
+
+                # loop de coleta dos statements
+                statement_block = Block()
+                FuncDec.children.append(statement_block)
+                while Parser.tokenizer.next.type != "END":
+                    statement_block.append(Parser.parse_statement())
+                
+                # consome o END e espera um NEWLINE
+                Parser.tokenizer.select_next()
+                Parser.expect("NEWLINE", "ao final de uma declaração de função")
+                Parser.tokenizer.select_next()
+
+                return FuncDec
+
 
         # se o primeiro token da linha for um PRINT
         if Parser.tokenizer.next.type == "PRINT":
@@ -126,7 +190,7 @@ class Parser:
             Parser.tokenizer.select_next()
 
             # verifica se abre parênteses
-            Parser.expect("OPENPAR", "para chamar a função ")
+            Parser.expect("OPENPAR", "para chamar a função")
             Parser.tokenizer.select_next()
 
             # chama o parse_boolean_expression

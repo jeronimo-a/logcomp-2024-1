@@ -170,19 +170,17 @@ class Vardec(Node):
 class FuncDec(Node):
     '''
     Possui n filhos no total, divididos em 3 pedaços
-    Filho 0: identifier (nome da função)
-    Filho 1: lista de Assign Nodes (parâmetros)
-    Filho 2: Block Node com o corpo da função
+    Filho 0: lista de Assign Nodes (parâmetros)
+    Filho 1: Block Node com o corpo da função
     '''
 
-    def __init__(self, table):
-        super().__init__("function")
+    def __init__(self, name, table):
+        super().__init__(name)
         self.table = table
     
     def Evaluate(self):
-        identifier = self.children[0].value
-        self.table.init(identifier)
-        self.table.set(identifier, self)
+        self.table.init(self.name)
+        self.table.set(self.name, self)
 
 
 class FuncCall(Node):
@@ -191,9 +189,9 @@ class FuncCall(Node):
     Filho n: argumento para o n-ésimo parâmetro da função
     '''
 
-    def __init__(self, function_table, identifier):
-        super().__init__(identifier)
-        self.value = identifier
+    def __init__(self, function_table, name):
+        super().__init__(name)
+        self.value = name
         self.table = function_table
 
     def Evaluate(self):
