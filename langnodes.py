@@ -8,7 +8,9 @@ class Node:
         return self.value, None
     
     def View(self, counter: int=0, margin: str="  "):
-        print(counter * margin, self.value, sep="")
+        print(counter * margin, self.value, sep="", end="")
+        try: print(" " + self.table.name)
+        except: print()
         for child in self.children:
             child.View(counter + 1, margin)
 
@@ -219,7 +221,7 @@ class FuncCall(Node):
             vardec.table.set(ident.value, argument[0], argument[1])
 
         # faz o Evaluate do corpo da função
-        FuncCall.switch_tables(self.children[1].children, self.local_table)
+        FuncCall.switch_tables(funcdec.children[1].children, self.local_table)
         return funcdec.children[1].Evaluate()
 
     @staticmethod

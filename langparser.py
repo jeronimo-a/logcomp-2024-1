@@ -448,8 +448,6 @@ class Parser:
         Implementação do factor do diagrama sintático
         Vide diagrama_sintatico.png
         '''
-
-        print("FACTOR:", Parser.tokenizer.next.type, Parser.tokenizer.next.value)
                 
         # lida com números
         if Parser.tokenizer.next.type == "NUM":
@@ -502,9 +500,7 @@ class Parser:
 
             # não for OPENPAR, é "chamada" de variável
             else:
-                print("####", Parser.tokenizer.next.type, Parser.tokenizer.next.value)
                 ident_node = Ident(ident_token.value, Parser.symbol_table)
-                print("retornou", ident_node.value)
                 return ident_node
 
         # lida com read

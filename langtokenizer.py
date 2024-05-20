@@ -46,7 +46,6 @@ class Tokenizer:
     
     def select_next(self):
         self._select_next()
-        print(self.next.type, self.next.value)
 
     def _select_next(self):
 
