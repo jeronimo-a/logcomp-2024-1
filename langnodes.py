@@ -211,13 +211,14 @@ class FuncCall(Node):
         except KeyError: raise Exception('Função "%s" não existe' % self.value)
         
         # faz a declaração dos argumentos na SymbolTable do escopo interno da função
+        if len(arguments) != len(funcdec.children[0].children):
+            raise Exception("Número errado de argumentos")
         for i in range(len(funcdec.children[0].children)):
             vardec = funcdec.children[0].children[i]
             vardec.table = self.local_table
             ident = vardec.children[0]
             ident.table = self.local_table
-            try: argument = arguments[i]
-            except IndexError: raise Exception("Número errado de argumentos.")
+            argument = arguments[i]
             vardec.Evaluate()
             vardec.table.set(ident.value, argument[0], argument[1])
 
