@@ -137,7 +137,7 @@ class Block(Node):
     def Evaluate(self, symbol_table: SymbolTable):
         for child in self.children:
             value = child.Evaluate(symbol_table)
-            if value is not None:
+            if value is not None and isinstance(child, Return):
                 return value
 
 
