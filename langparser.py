@@ -82,10 +82,10 @@ class Parser:
             if Parser.tokenizer.next.type == "ASSIGN":
 
                 # cria o Node Ident a partir do valor do token passado
-                ident_node = Ident(ident_token.value, Parser.symbol_table)
+                ident_node = Ident(ident_token.value)
 
                 # cria o Node Assign
-                assign_node = Assign(Parser.symbol_table)
+                assign_node = Assign()
                 Parser.tokenizer.select_next()
 
                 # chama o parse_boolean_expression
@@ -138,8 +138,8 @@ class Parser:
             if Parser.tokenizer.next.type == "IDENT":
 
                 # cria os Nodes Vardec e Ident dos parâmetros ainda sem symbol table
-                vardec_node = Vardec(None)
-                ident_node = Ident(Parser.tokenizer.next.value, None)
+                vardec_node = Vardec()
+                ident_node = Ident(Parser.tokenizer.next.value)
                 Parser.tokenizer.select_next()
 
                 # cria as relações entre os Nodes
@@ -154,8 +154,8 @@ class Parser:
                     Parser.expect("IDENT", "na declaração dos parâmetros de uma função")
 
                     # cria os Nodes Vardec e Ident dos parâmetros ainda sem symbol table
-                    vardec_node = Vardec(None)
-                    ident_node = Ident(Parser.tokenizer.next.value, None)
+                    vardec_node = Vardec()
+                    ident_node = Ident(Parser.tokenizer.next.value)
                     Parser.tokenizer.select_next()
 
                     # cria as relações entre os Nodes
@@ -318,14 +318,14 @@ class Parser:
         if Parser.tokenizer.next.type == "VARDEC":
 
             # gera o node VARDEC
-            vardec_node = Vardec(Parser.symbol_table)
+            vardec_node = Vardec()
             Parser.tokenizer.select_next()
 
             # espera um IDENT
             Parser.expect("IDENT", "um identificador depois de uma declaração de variável.")
 
             # gera o node IDENT que vem em seguida
-            ident_node = Ident(Parser.tokenizer.next.value, Parser.symbol_table)
+            ident_node = Ident(Parser.tokenizer.next.value)
             Parser.tokenizer.select_next()
 
             # adiciona a variável aos filhos de vardec
@@ -335,7 +335,7 @@ class Parser:
             if Parser.tokenizer.next.type == "ASSIGN":
 
                 # gera o node ASSIGN, adicona o IDENT ao seus filhos e o adiciona aos filhos de VARDEC
-                assign_node = Assign(Parser.symbol_table)
+                assign_node = Assign()
                 vardec_node.children.append(assign_node)
                 assign_node.children.append(ident_node)
                 Parser.tokenizer.select_next()
@@ -499,7 +499,7 @@ class Parser:
 
             # não for OPENPAR, é "chamada" de variável
             else:
-                ident_node = Ident(ident_token.value, Parser.symbol_table)
+                ident_node = Ident(ident_token.value)
                 return ident_node
 
         # lida com read

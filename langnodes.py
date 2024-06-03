@@ -3,11 +3,15 @@ from langfunciontable import FuncTable
 
 class Node:
 
+    BASE_ID = 0
+
     def __init__(self, value):
+        self.id = Node.BASE_ID
         self.value    = value
         self.children = list()
+        Node.BASE_ID += 1
 
-    def Evaluate(self):
+    def Evaluate(self, symbol_table: SymbolTable):
         return self.value, None
     
     def View(self, counter: int=0, margin: str="  "):
@@ -21,10 +25,10 @@ class BinOp(Node):
     def __init__(self, value: str):
         super().__init__(value)
 
-    def Evaluate(self):
+    def Evaluate(self, symbol_table: SymbolTable):
 
-        eval_l, type_l = self.children[0].Evaluate()
-        eval_r, type_r = self.children[1].Evaluate()
+        eval_l, type_l = self.children[0].Evaluate(symbol_table)
+        eval_r, type_r = self.children[1].Evaluate(symbol_table)
         mixed = type_l != type_r
 
         if self.value == ".."   : return str(eval_l) + str(eval_r)         , "str"
@@ -51,8 +55,8 @@ class UnOp(Node):
     def __init__(self, value: str):
         super().__init__(value)
 
-    def Evaluate(self):
-        child_eval, child_type = self.children[0].Evaluate()
+    def Evaluate(self, symbol_table: SymbolTable):
+        child_eval, child_type = self.children[0].Evaluate(symbol_table)
         if child_type != "int": raise Exception("UnOp funciona apenas com int, não com %s, var: %s" % child_type. self.children[0].value)
         if self.value == "+"    : return child_eval, "int"
         if self.value == "-"    : return child_eval * -1, "int"
@@ -65,7 +69,7 @@ class IntVal(Node):
     def __init__(self, value: int):
         super().__init__(value)
 
-    def Evaluate(self):
+    def Evaluate(self, symbol_table: SymbolTable):
         return int(self.value), "int"
     
 
@@ -74,24 +78,23 @@ class StrVal(Node):
     def __init__(self, value: int):
         super().__init__(value)
     
-    def Evaluate(self):
+    def Evaluate(self, symbol_table: SymbolTable):
         return str(self.value), "str"
 
 
 class NoOp(Node):
 
-    def __init__(self):
+    def __init__(self, symbol_table: SymbolTable):
         super().__init__(None)
 
 
 class Ident(Node):
 
-    def __init__(self, value: str, table):
+    def __init__(self, value: str):
         super().__init__(value)
-        self.table = table
 
-    def Evaluate(self):
-        try: result = self.table.get(self.value)
+    def Evaluate(self, symbol_table: SymbolTable):
+        try: result = symbol_table.get(self.value)
         except KeyError: raise Exception('Variável "%s" não existe' % self.value)
         return result
     
@@ -101,8 +104,8 @@ class Print(Node):
     def __init__(self):
         super().__init__("print")
 
-    def Evaluate(self):
-        print(self.children[0].Evaluate()[0])
+    def Evaluate(self, symbol_table: SymbolTable):
+        print(self.children[0].Evaluate(symbol_table)[0])
 
 
 class Read(Node):
@@ -110,20 +113,19 @@ class Read(Node):
     def __init__(self):
         super().__init__("read")
 
-    def Evaluate(self):
+    def Evaluate(self, symbol_table: SymbolTable):
         return int(input()), "int"
 
 
 class Assign(Node):
 
-    def __init__(self, table):
+    def __init__(self):
         super().__init__("=")
-        self.table = table
     
-    def Evaluate(self):
+    def Evaluate(self, symbol_table: SymbolTable):
         variable = self.children[0].value
-        value, type = self.children[1].Evaluate()
-        try: self.table.set(variable, value, type)
+        value, type = self.children[1].Evaluate(symbol_table)
+        try: symbol_table.set(variable, value, type)
         except KeyError: raise Exception('Variável "%s" não existe' % self.value)
 
 
@@ -132,9 +134,9 @@ class Block(Node):
     def __init__(self):
         super().__init__("%BLOCK%")
     
-    def Evaluate(self):
+    def Evaluate(self, symbol_table: SymbolTable):
         for child in self.children:
-            value = child.Evaluate()
+            value = child.Evaluate(symbol_table)
             if value is not None:
                 return value
 
@@ -144,7 +146,7 @@ class While(Node):
     def __init__(self):
         super().__init__("while")
 
-    def Evaluate(self):
+    def Evaluate(self, symbol_table: SymbolTable):
         while self.children[0].Evaluate()[0]:
             self.children[1].Evaluate()     # Block
 
@@ -154,21 +156,20 @@ class If(Node):
     def __init__(self):
         super().__init__("if")
 
-    def Evaluate(self):
-        if self.children[0].Evaluate()[0]: self.children[1].Evaluate()    # Block
-        else: self.children[2].Evaluate()                   # Block
+    def Evaluate(self, symbol_table: SymbolTable):
+        if self.children[0].Evaluate(symbol_table)[0]: self.children[1].Evaluate(symbol_table)    # Block
+        else: self.children[2].Evaluate(symbol_table)                   # Block
 
 
 class Vardec(Node):
 
-    def __init__(self, table):
+    def __init__(self):
         super().__init__("local")
-        self.table = table
 
-    def Evaluate(self):
+    def Evaluate(self, symbol_table: SymbolTable):
         identifier = self.children[0].value
-        self.table.init(identifier)
-        try: self.children[1].Evaluate()
+        symbol_table.init(identifier)
+        try: self.children[1].Evaluate(symbol_table)
         except IndexError: pass
 
 
@@ -183,7 +184,7 @@ class FuncDec(Node):
         super().__init__(name)
         self.function_table = function_table
     
-    def Evaluate(self):
+    def Evaluate(self, symbol_table: SymbolTable):
 
         # inicializa o nome na function table, define o valor como a instância de FuncDec em si
         self.function_table.init(self.value)
@@ -200,7 +201,7 @@ class FuncCall(Node):
         super().__init__(name)
         self.function_table = function_table
 
-    def Evaluate(self):
+    def Evaluate(self, symbol_table: SymbolTable):
         
         # pega a referência do node de definição da função
         funcdec_node = self.function_table.get(self.value)
@@ -211,6 +212,16 @@ class FuncCall(Node):
         if n_params != n_args:
             raise Exception('Quantidade inválida de parâmetros na chamada da função %s' % funcdec_node.value)
 
+        # cria a symbol table local e define os parâmetros
+        local_symbol_table = SymbolTable(self.value + str(self.id))
+        for i in range(n_args):
+            param = funcdec_node.children[i]
+            arg_value, arg_type = self.children[i].Evaluate(symbol_table)
+            param.Evaluate(local_symbol_table)
+            local_symbol_table.set(param.children[0].value, arg_value, arg_type)
+
+        # faz o evaluate do block da função com a symbol table local
+        return funcdec_node.children[-1].Evaluate(local_symbol_table)
 
 
 class Return(Node):
@@ -218,5 +229,5 @@ class Return(Node):
     def __init__(self):
         super().__init__("return")
     
-    def Evaluate(self):
-        return self.children[0].Evaluate()
+    def Evaluate(self, symbol_table: SymbolTable):
+        return self.children[0].Evaluate(symbol_table)
