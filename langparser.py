@@ -128,7 +128,6 @@ class Parser:
 
             # cria o Node FuncDec e consome o token IDENT
             funcdec_node = FuncDec(Parser.tokenizer.next.value, Parser.function_table)
-            funcdec_node.children.append(Block())
             Parser.tokenizer.select_next()
 
             # espera-se um OPENPAR
@@ -145,7 +144,7 @@ class Parser:
 
                 # cria as relações entre os Nodes
                 vardec_node.children.append(ident_node)
-                funcdec_node.children[0].children.append(vardec_node)
+                funcdec_node.children.append(vardec_node)
 
                 # loop de coleta
                 while Parser.tokenizer.next.type == "COMMA":
@@ -161,7 +160,7 @@ class Parser:
 
                     # cria as relações entre os Nodes
                     vardec_node.children.append(ident_node)
-                    funcdec_node.children[0].children.append(vardec_node)
+                    funcdec_node.children.append(vardec_node)
 
                 # espera-se um CLOSEPAR seguido de NEWLINE
                 Parser.expect("CLOSEPAR", "ao declarar uma função")

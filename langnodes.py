@@ -1,4 +1,5 @@
 from langsymboltable import SymbolTable
+from langfunciontable import FuncTable
 
 class Node:
 
@@ -10,9 +11,7 @@ class Node:
         return self.value, None
     
     def View(self, counter: int=0, margin: str="  "):
-        print(counter * margin, self.value, sep="", end="")
-        try: print(" " + self.table.name)
-        except: print()
+        print(counter * margin, self.value, sep="")
         for child in self.children:
             child.View(counter + 1, margin)
 
@@ -180,11 +179,13 @@ class FuncDec(Node):
     Filho n: Block Node com o corpo da função
     '''
 
-    def __init__(self, name, table):
+    def __init__(self, name: str, function_table: FuncTable):
         super().__init__(name)
-        self.function_table = table
+        self.function_table = function_table
     
     def Evaluate(self):
+
+        # inicializa o nome na function table, define o valor como a instância de FuncDec em si
         self.function_table.init(self.value)
         self.function_table.set(self.value, self)
 
@@ -195,12 +196,21 @@ class FuncCall(Node):
     Filho i: argumento para o i-ésimo parâmetro da função
     '''
 
-    def __init__(self, name, function_table):
+    def __init__(self, name, function_table: FuncTable):
         super().__init__(name)
-        pass
+        self.function_table = function_table
 
     def Evaluate(self):
-        pass
+        
+        # pega a referência do node de definição da função
+        funcdec_node = self.function_table.get(self.value)
+
+        # conta o número de parâmetros da função e de argumentos da chamada
+        n_params = len(funcdec_node.children) - 1
+        n_args = len(self.children)
+        if n_params != n_args:
+            raise Exception('Quantidade inválida de parâmetros na chamada da função %s' % funcdec_node.value)
+
 
 
 class Return(Node):
