@@ -147,8 +147,8 @@ class While(Node):
         super().__init__("while")
 
     def Evaluate(self, symbol_table: SymbolTable):
-        while self.children[0].Evaluate()[0]:
-            self.children[1].Evaluate()     # Block
+        while self.children[0].Evaluate(symbol_table)[0]:
+            return self.children[1].Evaluate(symbol_table)     # Block
 
 
 class If(Node):
@@ -157,8 +157,8 @@ class If(Node):
         super().__init__("if")
 
     def Evaluate(self, symbol_table: SymbolTable):
-        if self.children[0].Evaluate(symbol_table)[0]: self.children[1].Evaluate(symbol_table)    # Block
-        else: self.children[2].Evaluate(symbol_table)                   # Block
+        if self.children[0].Evaluate(symbol_table)[0]: return self.children[1].Evaluate(symbol_table)    # Block
+        else: return self.children[2].Evaluate(symbol_table)                   # Block
 
 
 class Vardec(Node):
