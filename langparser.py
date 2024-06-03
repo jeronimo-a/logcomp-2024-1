@@ -1,4 +1,5 @@
-from langsymboltable import SymbolTable, FuncTable
+from langsymboltable import SymbolTable
+from langfunciontable import FuncTable
 from langtokenizer import Tokenizer
 from langprepro import PrePro
 from langnodes import *
@@ -23,7 +24,7 @@ class Parser:
         '''
 
         root = Parser._run(source)
-        root.Evaluate()
+        root.Evaluate(Parser.symbol_table)
 
         if (Parser.tokenizer.next.type != "EOF"):
             raise Exception("Erro de sintaxe")
@@ -162,24 +163,24 @@ class Parser:
                     vardec_node.children.append(ident_node)
                     funcdec_node.children.append(vardec_node)
 
-                # espera-se um CLOSEPAR seguido de NEWLINE
-                Parser.expect("CLOSEPAR", "ao declarar uma função")
-                Parser.tokenizer.select_next()
-                Parser.expect("NEWLINE", "ao declarar uma função")
-                Parser.tokenizer.select_next()
+            # espera-se um CLOSEPAR seguido de NEWLINE
+            Parser.expect("CLOSEPAR", "ao declarar uma função")
+            Parser.tokenizer.select_next()
+            Parser.expect("NEWLINE", "ao declarar uma função")
+            Parser.tokenizer.select_next()
 
-                # loop de coleta dos statements
-                statement_block = Block()
-                funcdec_node.children.append(statement_block)
-                while Parser.tokenizer.next.type != "END":
-                    statement_block.children.append(Parser.parse_statement())
-                
-                # consome o END e espera um NEWLINE
-                Parser.tokenizer.select_next()
-                Parser.expect("NEWLINE", "ao final de uma declaração de função")
-                Parser.tokenizer.select_next()
+            # loop de coleta dos statements
+            statement_block = Block()
+            funcdec_node.children.append(statement_block)
+            while Parser.tokenizer.next.type != "END":
+                statement_block.children.append(Parser.parse_statement())
+            
+            # consome o END e espera um NEWLINE
+            Parser.tokenizer.select_next()
+            Parser.expect("NEWLINE", "ao final de uma declaração de função")
+            Parser.tokenizer.select_next()
 
-                return funcdec_node
+            return funcdec_node
             
         # se o primeiro token da linha for um RETURN
         if Parser.tokenizer.next.type == "RETURN":
@@ -351,6 +352,7 @@ class Parser:
             return vardec_node
         
         # gera erro caso chegar aqui
+        print(Parser.tokenizer.position)
         print(Parser.tokenizer.next.type)
         raise Exception("Erro de sintaxe")
 
@@ -489,7 +491,8 @@ class Parser:
                 # cria o Node FuncCall da chamada de função, faz o parsing dos argumentos e consome o OPENPAR
                 funccall_node = FuncCall(ident_token.value, Parser.function_table)
                 Parser.tokenizer.select_next()
-                Parser.parse_function_args(funccall_node)
+                if Parser.tokenizer.next.type != "CLOSEPAR":
+                    Parser.parse_function_args(funccall_node)
 
                 # verifica se tem fechamento de parênteses
                 Parser.expect("CLOSEPAR", "em uma chamada de função")
