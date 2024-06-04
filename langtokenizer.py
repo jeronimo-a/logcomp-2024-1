@@ -4,6 +4,7 @@ class Tokenizer:
 
     letters        = "abcdefghijklmnopqrstuvwxyz"
     letters       += letters.upper()
+    letters       += "ÁÉÍÓÚáéíóúÀàÂÊÔâêôÃÕãõÇç"
     allowed_chars  = letters + "0123456789_"
     reserved_words = {
         "print"     : "PRINT",
