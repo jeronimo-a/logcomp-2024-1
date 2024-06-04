@@ -137,7 +137,7 @@ class Block(Node):
     def Evaluate(self, symbol_table: SymbolTable):
         for child in self.children:
             value = child.Evaluate(symbol_table)
-            if value is not None and isinstance(child, Return):
+            if value is not None and not isinstance(child, FuncCall):
                 return value
 
 
@@ -148,7 +148,9 @@ class While(Node):
 
     def Evaluate(self, symbol_table: SymbolTable):
         while self.children[0].Evaluate(symbol_table)[0]:
-            return self.children[1].Evaluate(symbol_table)     # Block
+            result = self.children[1].Evaluate(symbol_table)    # block
+            if result is not None:
+                return result
 
 
 class If(Node):

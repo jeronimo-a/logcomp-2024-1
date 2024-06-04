@@ -516,7 +516,7 @@ class Parser:
             return latest_node
             
         # gera erro caso chegar aqui
-        print(Parser.tokenizer.next.type, Parser.tokenizer.next.value)
+        print(Parser.tokenizer.next.type, Parser.tokenizer.next.value, Parser.tokenizer.position, Parser.tokenizer.source[:Parser.tokenizer.position])
         raise Exception("Erro de sintaxe")
     
 
