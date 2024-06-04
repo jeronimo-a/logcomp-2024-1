@@ -1,3 +1,5 @@
+import copy
+
 from langsymboltable import SymbolTable
 from langfunciontable import FuncTable
 
@@ -214,12 +216,13 @@ class FuncCall(Node):
         if n_params != n_args:
             raise Exception('Quantidade inválida de parâmetros na chamada da função %s' % funcdec_node.value)
 
-        # cria a symbol table local e define os parâmetros
-        local_symbol_table = SymbolTable(self.value + str(self.id))
+        # cria a symbol table local, que é uma cópia da global, e define inicializa os argumentos
+        local_symbol_table = copy.copy(symbol_table)
         for i in range(n_args):
             param = funcdec_node.children[i]
             arg_value, arg_type = self.children[i].Evaluate(symbol_table)
-            param.Evaluate(local_symbol_table)
+            try: param.Evaluate(local_symbol_table)
+            except ValueError: pass
             local_symbol_table.set(param.children[0].value, arg_value, arg_type)
 
         # faz o evaluate do block da função com a symbol table local
