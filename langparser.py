@@ -108,7 +108,8 @@ class Parser:
                 # cria o Node FuncCall a partir do token anterior, faz o parsing dos argumentos e consome o OPENPAR
                 funccall_node = FuncCall(ident_token.value, Parser.function_table)
                 Parser.tokenizer.select_next()
-                Parser.parse_function_args(funccall_node)
+                if Parser.tokenizer.next.type != "CLOSEPAR":
+                    Parser.parse_function_args(funccall_node)
 
                 # verifica se tem fechamento de parênteses
                 Parser.expect("CLOSEPAR", "para uma chamada de função")
